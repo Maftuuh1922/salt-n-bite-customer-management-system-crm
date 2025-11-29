@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { api } from '@/lib/api-client';
 import type { DashboardStats } from '@shared/types';
 import { setAuthToken } from '@/lib/auth';
-const FeatureCard = ({ icon, title, description, link }: { icon: React.ElementType, title: string, description: string, link: string }) => {
+const FeatureCard = ({ icon, title, description }: { icon: React.ElementType, title: string, description: string }) => {
   const Icon = icon;
   return (
     <motion.div
@@ -28,13 +28,6 @@ const FeatureCard = ({ icon, title, description, link }: { icon: React.ElementTy
         <CardContent className="flex-grow">
           <p className="text-muted-foreground">{description}</p>
         </CardContent>
-        <div className="p-6 pt-0">
-          <Button variant="outline" asChild>
-            <Link to={link}>
-              Go to {title} <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
       </Card>
     </motion.div>
   );
@@ -109,19 +102,16 @@ export function HomePage() {
                     icon={BarChart}
                     title="Dashboard"
                     description="Get a real-time overview of your customer activity, sales, and engagement metrics."
-                    link="/dashboard"
                   />
                   <FeatureCard
                     icon={Users}
                     title="Customer Profiles"
                     description="Access detailed customer histories, including transactions, visits, and loyalty status."
-                    link="/customers"
                   />
                   <FeatureCard
                     icon={Gift}
                     title="Promo Management"
                     description="Create, manage, and track the performance of your promotional events and loyalty programs."
-                    link="/promos"
                   />
                 </>
               )}

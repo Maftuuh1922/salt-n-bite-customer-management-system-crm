@@ -22,7 +22,10 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth';
 const reservationSchema = z.object({
   reservation_time: z.string().min(1, "Time is required"),
-  number_of_guests: z.coerce.number().min(1, "Must be a number greater than 0"),
+  number_of_guests: z.preprocess(
+    (val) => Number(val),
+    z.number().min(1, "Must be a number greater than 0")
+  ),
   notes: z.string().optional(),
 });
 type ReservationFormData = z.infer<typeof reservationSchema>;

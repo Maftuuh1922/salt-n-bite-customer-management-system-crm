@@ -43,18 +43,6 @@ export function Hero({ stats }: { stats: { totalCustomers: number; todaysVisits:
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-8 flex justify-center gap-4"
-          >
-            <Button size="lg" className="bg-white text-[#F38020] hover:bg-white/90 font-semibold" asChild>
-              <Link to="/dashboard">
-                Open Dashboard <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
             className="mt-12 flex flex-wrap justify-center gap-6 md:gap-12"
           >

@@ -61,7 +61,7 @@ export function Dashboard() {
   }
   return (
     <AppLayout container>
-      <motion.div 
+      <motion.div
         className="space-y-8"
         initial="hidden"
         animate="visible"
@@ -70,7 +70,7 @@ export function Dashboard() {
         }}
       >
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <motion.div 
+        <motion.div
           className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
           variants={{
             hidden: { opacity: 0 },
@@ -134,7 +134,7 @@ export function Dashboard() {
             <CardHeader className="flex flex-row items-center">
               <div className="grid gap-2"><CardTitle>Top Customers</CardTitle></div>
               <Button asChild size="sm" className="ml-auto gap-1">
-                <Link to="/customers/cust_1">View All <ArrowUpRight className="h-4 w-4" /></Link>
+                <Link to="/customers">View All <ArrowUpRight className="h-4 w-4" /></Link>
               </Button>
             </CardHeader>
             <CardContent>

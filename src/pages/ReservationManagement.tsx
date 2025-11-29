@@ -25,19 +25,13 @@ const reservationSchema = z.object({
   number_of_guests: z.coerce.number().min(1, "Must be a number greater than 0"),
   notes: z.string().optional(),
 });
-// Explicitly define the form type to correct the inference from z.coerce.number()
-type ReservationFormData = {
-    customer_phone: string;
-    reservation_time: string;
-    number_of_guests: number;
-    notes?: string;
-};
+type ReservationFormData = z.infer<typeof reservationSchema>;
 export function ReservationManagement() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const queryClient = useQueryClient();
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ReservationFormData>({
-    resolver: zodResolver(reservationSchema as z.ZodSchema<ReservationFormData>),
+    resolver: zodResolver(reservationSchema),
     defaultValues: {
       number_of_guests: 1,
     }

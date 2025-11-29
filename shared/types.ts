@@ -17,6 +17,10 @@ export interface Customer {
   last_visit: string;
   avatarUrl?: string;
 }
+export interface EncryptedCustomer extends Omit<Customer, 'phone_number' | 'email'> {
+  phone_number: string; // base64
+  email?: string; // base64
+}
 export interface Transaction {
   id: string;
   customer_id: string;
@@ -24,6 +28,7 @@ export interface Transaction {
   total_amount: number;
   payment_method: 'Credit Card' | 'Cash' | 'Digital Wallet';
   loyalty_points_earned: number;
+  loyalty_points_used?: number;
   pos_transaction_id: string;
   items: { name: string; quantity: number; price: number }[];
   promo_id?: string;
@@ -88,20 +93,30 @@ export interface ReportParams {
   start: string;
   end: string;
 }
+export interface CustomerGroup {
+  level: MembershipLevel;
+  count: number;
+  total_spent: number;
+}
+export type ReportData =
+  | { date: string; visits: number }[]
+  | { promo_name: string; redemptions: number; revenue: number }[]
+  | { type: 'Earned' | 'Spent'; points: number }[]
+  | { rating: number; count: number }[];
 export interface AggregatedReport {
   type: ReportType;
   period: { start: string; end: string };
   metrics: {
-    total: number;
+    total?: number;
     avg?: number;
     [key: string]: number | undefined;
   };
-  data: any[];
+  data: ReportData;
 }
 export interface Notification {
   id: string;
   customer_id: string;
-  type: 'promo' | 'birthday' | 'reservation';
+  type: 'promo' | 'birthday' | 'reservation' | 'registration';
   message: string;
   sent_at?: string;
   status: 'queued' | 'sent' | 'failed';

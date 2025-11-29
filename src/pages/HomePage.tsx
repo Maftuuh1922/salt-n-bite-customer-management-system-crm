@@ -10,6 +10,7 @@ import { ArrowRight, BarChart, Gift, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api } from '@/lib/api-client';
 import type { DashboardStats } from '@shared/types';
+import { setAuthToken } from '@/lib/auth';
 const FeatureCard = ({ icon, title, description, link }: { icon: React.ElementType, title: string, description: string, link: string }) => {
   const Icon = icon;
   return (
@@ -43,7 +44,7 @@ export function HomePage() {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     // Prefill demo auth token for Phase 1
-    localStorage.setItem('authToken', 'demo-mode-token');
+    setAuthToken('demo-admin-jwt');
     api<DashboardStats>('/api/dashboard/stats')
       .then(data => {
         setStats(data);

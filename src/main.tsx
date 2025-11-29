@@ -5,9 +5,9 @@ import React, { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   createBrowserRouter,
-  Navigate,
   RouterProvider,
 } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
@@ -17,13 +17,15 @@ import { CustomerProfile } from '@/pages/CustomerProfile';
 import { PromoManagement } from '@/pages/PromoManagement';
 import { ReservationManagement } from '@/pages/ReservationManagement';
 import { Reporting } from '@/pages/Reporting';
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = localStorage.getItem('authToken') === 'demo-admin';
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-  return <>{children}</>;
-};
+import { ProtectedRoute } from '@/lib/auth';
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 const router = createBrowserRouter([
   {
     path: "/",
@@ -56,11 +58,12 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorBoundary />,
   },
 ]);
-// Do not touch this code
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <RouterProvider router={router} />
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>,
 )

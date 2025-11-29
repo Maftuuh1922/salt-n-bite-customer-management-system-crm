@@ -7,21 +7,36 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { Star, Gift, Phone, Mail, Calendar, DollarSign, PlusCircle } from 'lucide-react';
 import { api } from '@/lib/api-client';
-import type { Customer, Transaction, Reservation, Feedback, EncryptedCustomer } from '@shared/types';
+import type { Customer, Transaction, Reservation, Feedback, EncryptedCustomer, FeedbackCreate } from '@shared/types';
 import { format } from 'date-fns';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { motion } from 'framer-motion';
 import { showNotification } from '@/components/NotificationToast';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useState } from 'react';
 const decrypt = (str: string | undefined) => str ? atob(str) : 'N/A';
+const feedbackSchema = z.object({
+  transaction_id: z.string().min(1, "Please select a transaction"),
+  rating: z.number().min(1).max(5),
+  comment: z.string().optional(),
+});
+type FeedbackFormData = z.infer<typeof feedbackSchema>;
 export function CustomerProfile() {
   const { id } = useParams<{ id: string }>();
   const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
+  const [isFeedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const { data: customer, isLoading: isLoadingCustomer } = useQuery({
     queryKey: ['customer', id],
     queryFn: () => api<EncryptedCustomer>(`/api/customers/${id}`),
@@ -32,6 +47,29 @@ export function CustomerProfile() {
     queryFn: () => api<Transaction[]>(`/api/customers/${id}/transactions`),
     enabled: !!id,
   });
+  const { data: feedback, isLoading: isLoadingFeedback } = useQuery({
+    queryKey: ['feedback', id],
+    queryFn: () => api<Feedback[]>(`/api/feedback/${id}`),
+    enabled: !!id,
+  });
+  const { control, handleSubmit, reset, formState: { errors } } = useForm<FeedbackFormData>({
+    resolver: zodResolver(feedbackSchema),
+    defaultValues: { rating: 3 },
+  });
+  const createFeedbackMutation = useMutation({
+    mutationFn: (data: FeedbackCreate) => api('/api/feedback', { method: 'POST', body: JSON.stringify(data) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['feedback', id] });
+      showNotification('success', 'Thank you for your feedback!');
+      setFeedbackDialogOpen(false);
+      reset();
+    },
+    onError: () => showNotification('error', 'Failed to submit feedback.'),
+  });
+  const onFeedbackSubmit = (data: FeedbackFormData) => {
+    if (!id) return;
+    createFeedbackMutation.mutate({ customer_id: id, ...data });
+  };
   const getInitials = (name: string) => {
     const names = name.split(' ');
     return names.length > 1 ? `${names[0][0]}${names[names.length - 1][0]}` : name.substring(0, 2);
@@ -40,10 +78,7 @@ export function CustomerProfile() {
     return (
       <AppLayout container>
         <div className="grid md:grid-cols-3 gap-8">
-          <div className="md:col-span-1 space-y-4">
-            <Skeleton className="h-48 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </div>
+          <div className="md:col-span-1 space-y-4"><Skeleton className="h-48 w-full" /><Skeleton className="h-32 w-full" /></div>
           <div className="md:col-span-2"><Skeleton className="h-96 w-full" /></div>
         </div>
       </AppLayout>
@@ -116,7 +151,63 @@ export function CustomerProfile() {
                 <Card><CardHeader><CardTitle>Reservation History</CardTitle></CardHeader><CardContent className="text-center text-muted-foreground py-12"><p>No reservation history available.</p></CardContent></Card>
               </TabsContent>
               <TabsContent value="feedback">
-                <Card><CardHeader><CardTitle>Feedback History</CardTitle></CardHeader><CardContent className="text-center text-muted-foreground py-12"><p>No feedback history available.</p></CardContent></Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Feedback History</CardTitle>
+                    <Dialog open={isFeedbackDialogOpen} onOpenChange={setFeedbackDialogOpen}>
+                      <DialogTrigger asChild><Button variant="outline"><Star className="mr-2 h-4 w-4" />Submit Feedback</Button></DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader><DialogTitle>Submit Feedback</DialogTitle><DialogDescription>Share your experience with us.</DialogDescription></DialogHeader>
+                        <form onSubmit={handleSubmit(onFeedbackSubmit)} className="space-y-4">
+                          <div>
+                            <Label>Transaction</Label>
+                            <Controller name="transaction_id" control={control} render={({ field }) => (
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <SelectTrigger><SelectValue placeholder="Select a recent transaction" /></SelectTrigger>
+                                <SelectContent>
+                                  {transactions?.map(tx => <SelectItem key={tx.id} value={tx.id}>Txn on {format(new Date(tx.transaction_date), 'd MMM yyyy')} - Rp {tx.total_amount.toLocaleString('id-ID')}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            )} />
+                            {errors.transaction_id && <p className="text-red-500 text-sm mt-1">{errors.transaction_id.message}</p>}
+                          </div>
+                          <div>
+                            <Label>Rating</Label>
+                            <Controller name="rating" control={control} render={({ field }) => (
+                              <div className="flex items-center gap-2">
+                                <Slider defaultValue={[3]} min={1} max={5} step={1} onValueChange={(value) => field.onChange(value[0])} />
+                                <span className="font-bold text-primary w-4">{field.value}</span>
+                              </div>
+                            )} />
+                          </div>
+                          <div>
+                            <Label>Comment (Optional)</Label>
+                            <Controller name="comment" control={control} render={({ field }) => <Textarea {...field} />} />
+                          </div>
+                          <DialogFooter><Button type="submit" disabled={createFeedbackMutation.isPending}>Submit</Button></DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoadingFeedback ? <Skeleton className="h-64 w-full" /> : feedback && feedback.length > 0 ? (
+                      <Table>
+                        <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Rating</TableHead><TableHead>Comment</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                          {feedback.map(f => (
+                            <TableRow key={f.id}>
+                              <TableCell>{format(new Date(f.feedback_date), 'd MMM yyyy')}</TableCell>
+                              <TableCell><div className="flex gap-0.5">{Array.from({ length: f.rating }).map((_, i) => <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />)}</div></TableCell>
+                              <TableCell className="text-muted-foreground">{f.comment}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center text-muted-foreground py-12"><p>No feedback history available.</p></div>
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
             </motion.div>
           </Tabs>

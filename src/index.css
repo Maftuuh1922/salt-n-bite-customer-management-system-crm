@@ -55,3 +55,16 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+@layer utilities {
+  .batik-bg {
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(circle at 25% 25%, hsl(var(--secondary) / 0.5) 0%, transparent 40%),
+      repeating-linear-gradient(45deg, transparent, transparent 10px, hsl(var(--primary) / 0.03) 10px, hsl(var(--primary) / 0.03) 20px);
+  }
+  .dark .batik-bg {
+    background-image:
+      radial-gradient(circle at 25% 25%, hsl(var(--secondary) / 0.2) 0%, transparent 40%),
+      repeating-linear-gradient(45deg, transparent, transparent 10px, hsl(var(--primary) / 0.05) 10px, hsl(var(--primary) / 0.05) 20px);
+  }
+}

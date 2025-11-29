@@ -88,13 +88,19 @@ export interface Paginated<T> {
   items: T[];
   next?: string | null;
 }
-export interface PaginatedReservation extends Paginated<Reservation> {}
+export type PaginatedReservation = Paginated<Reservation>;
 export interface ReservationCreate {
   customer_phone: string;
   reservation_date: string;
   reservation_time: string;
   number_of_guests: number;
   notes?: string;
+}
+export interface FeedbackCreate {
+  customer_id: string;
+  transaction_id: string;
+  rating: number;
+  comment?: string;
 }
 export interface LoyaltyCalcRequest {
   total_amount: number;

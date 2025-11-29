@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { ok, bad, notFound, isStr } from './core-utils';
 import { CustomerEntity, TransactionEntity, PromoEntity, ReservationEntity, FeedbackEntity, LoyaltyEventEntity, NotificationEntity } from './entities';
-import type { Customer, DashboardStats, Transaction, Reservation, Feedback, Notification, AggregatedReport, ReportType, CustomerGroup, MembershipLevel, Promo, ReservationCreate } from "@shared/types";
+import type { Customer, DashboardStats, Transaction, Reservation, Feedback, Notification, AggregatedReport, ReportType, CustomerGroup, MembershipLevel, Promo, ReservationCreate, FeedbackCreate } from "@shared/types";
 import { subDays, format, parseISO, isWithinInterval } from 'date-fns';
 let seeded = false;
 const seedMiddleware = async (c: any, next: any) => {
@@ -83,7 +83,8 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     if (customer) return ok(c, { ...customer, existed: true });
     const newCustomerData: Customer = { id: crypto.randomUUID(), phone_number, name, email, membership_level: 'Bronze', total_visits: 1, total_spent: 0, loyalty_points: 0, registration_date: new Date().toISOString(), last_visit: new Date().toISOString(), avatarUrl: `https://api.dicebear.com/8.x/adventurer/svg?seed=${name.split(' ')[0]}` };
     const newCustomer = await CustomerEntity.create(c.env, newCustomerData);
-    await NotificationEntity.create(c.env, { id: crypto.randomUUID(), customer_id: newCustomer.id, type: 'registration', message: `Welcome to Salt N Bite, ${name}!`, status: 'queued' });
+    const notif: Notification = { id: crypto.randomUUID(), customer_id: newCustomer.id, type: 'registration', message: `Welcome to Salt N Bite, ${name}!`, status: 'queued' };
+    await NotificationEntity.create(c.env, notif);
     console.log(`[AUDIT] New customer registered: ${name}.`);
     return ok(c, { ...newCustomer, existed: false });
   });
@@ -137,6 +138,8 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     }
     const reservation: Reservation = { id: crypto.randomUUID(), customer_id: customer.id, reservation_date: `${reservation_date}T${reservation_time}:00.000Z`, number_of_guests, status: 'confirmed', notes };
     await ReservationEntity.create(c.env, reservation);
+    const notif: Notification = { id: crypto.randomUUID(), customer_id: customer.id, type: 'reservation', message: `Your reservation for ${format(new Date(reservation.reservation_date), 'PPP @ HH:mm')} is confirmed.`, status: 'queued' };
+    await NotificationEntity.create(c.env, notif);
     console.log(`[AUDIT] Reservation created for ${customer.name}`);
     return ok(c, reservation);
   });
@@ -185,5 +188,33 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       default: return notFound(c, 'Report type not found');
     }
     return ok(c, report);
+  });
+  // FEEDBACK
+  app.post('/api/feedback', async (c) => {
+    const { customer_id, transaction_id, rating, comment } = await c.req.json<FeedbackCreate>();
+    if (!isStr(customer_id) || !isStr(transaction_id) || rating < 1 || rating > 5) return bad(c, 'Invalid feedback data');
+    const fb: Feedback = { id: crypto.randomUUID(), customer_id, transaction_id, rating, comment: comment || '', feedback_date: new Date().toISOString() };
+    await FeedbackEntity.create(c.env, fb);
+    console.log(`[AUDIT] Feedback submitted for transaction ${transaction_id}`);
+    return ok(c, fb);
+  });
+  app.get('/api/feedback/:customer_id', async (c) => {
+    const id = c.req.param('customer_id');
+    const all = await FeedbackEntity.list(c.env);
+    return ok(c, all.items.filter(f => f.customer_id === id));
+  });
+  // NOTIFICATIONS
+  app.post('/api/notifications/whatsapp', async (c) => {
+    const { customer_id, type, message } = await c.req.json<Partial<Notification>>();
+    if (!customer_id || !message || !type) return bad(c, 'Invalid notification data');
+    const notif: Notification = { id: crypto.randomUUID(), customer_id, type, message, status: 'queued' };
+    const entity = new NotificationEntity(c.env, notif.id);
+    await entity.save(notif);
+    // Mock send
+    setTimeout(async () => {
+      await entity.mutate(s => ({ ...s, status: 'sent', sent_at: new Date().toISOString() }));
+      console.log(`[WHATSAPP MOCK] Sent to ${customer_id}: "${message}"`);
+    }, 1500);
+    return ok(c, notif);
   });
 }

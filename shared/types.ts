@@ -68,3 +68,22 @@ export interface DashboardStats {
   topCustomers: Customer[];
   recentTransactions: Transaction[];
 }
+export type Role = 'admin' | 'staff' | 'manager' | 'customer';
+export interface AuthResponse {
+  token: string;
+  role: Role;
+}
+export type ReportType = 'customer-activity' | 'promo-effectiveness' | 'loyalty-usage' | 'feedback';
+export interface Paginated<T> {
+  items: T[];
+  next?: string | null;
+}
+export interface LoyaltyCalcRequest {
+  total_amount: number;
+  event_id?: string;
+}
+export interface ReportParams {
+  type: ReportType;
+  start: string;
+  end: string;
+}

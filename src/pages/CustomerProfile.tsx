@@ -23,12 +23,12 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useState, useEffect } from 'react';
-import { CustomerLayout } from '@/components/layout/CustomerLayout';
+import { CustomerLayout } from '@/components/layout/CustomerLayout';function cn<T = unknown>(...args: unknown[]): T | null {console.warn('cn is not implemented', args);return null as T | null;}
 const decrypt = (str: string | undefined) => str ? atob(str) : 'N/A';
 const feedbackSchema = z.object({
   transaction_id: z.string().min(1, "Please select a transaction"),
   rating: z.number().min(1).max(5),
-  comment: z.string().optional(),
+  comment: z.string().optional()
 });
 type FeedbackFormData = z.infer<typeof feedbackSchema>;
 export function CustomerProfile() {
@@ -38,21 +38,21 @@ export function CustomerProfile() {
   const { data: customer, isLoading: isLoadingCustomer } = useQuery({
     queryKey: ['customer', customerId],
     queryFn: () => api<EncryptedCustomer>(`/api/customers/${customerId}`),
-    enabled: !!customerId,
+    enabled: !!customerId
   });
   const { data: transactions, isLoading: isLoadingTransactions } = useQuery({
     queryKey: ['transactions', customerId],
     queryFn: () => api<Transaction[]>(`/api/customers/${customerId}/transactions`),
-    enabled: !!customerId,
+    enabled: !!customerId
   });
   const { data: feedback, isLoading: isLoadingFeedback } = useQuery({
     queryKey: ['feedback', customerId],
     queryFn: () => api<Feedback[]>(`/api/feedback/${customerId}`),
-    enabled: !!customerId,
+    enabled: !!customerId
   });
   const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<FeedbackFormData>({
     resolver: zodResolver(feedbackSchema),
-    defaultValues: { rating: 3 },
+    defaultValues: { rating: 3 }
   });
   useEffect(() => {
     if (transactions && transactions.length > 0) {
@@ -67,7 +67,7 @@ export function CustomerProfile() {
       setFeedbackDialogOpen(false);
       reset({ rating: 3 });
     },
-    onError: () => showNotification('error', 'Failed to submit feedback.'),
+    onError: () => showNotification('error', 'Failed to submit feedback.')
   });
   const onFeedbackSubmit = (data: FeedbackFormData) => {
     if (!customerId) return;
@@ -86,8 +86,8 @@ export function CustomerProfile() {
             <div className="md:col-span-2"><Skeleton className="h-96 w-full" /></div>
           </div>
         </div>
-      </CustomerLayout>
-    );
+      </CustomerLayout>);
+
   }
   if (!customer) {
     return <CustomerLayout><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12 text-center">Customer not found.</div></CustomerLayout>;
@@ -118,16 +118,16 @@ export function CustomerProfile() {
                   <Card>
                     <CardHeader><CardTitle>Transaction History</CardTitle></CardHeader>
                     <CardContent>
-                      {isLoadingTransactions ? <Skeleton className="h-64 w-full" /> : (
-                        <Table>
+                      {isLoadingTransactions ? <Skeleton className="h-64 w-full" /> :
+                      <Table>
                           <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Amount</TableHead><TableHead>Payment</TableHead><TableHead>Points Earned</TableHead></TableRow></TableHeader>
                           <TableBody>
-                            {transactions?.map(tx => (
-                              <TableRow key={tx.id}><TableCell>{format(new Date(tx.transaction_date), 'd MMM yyyy')}</TableCell><TableCell>Rp {tx.total_amount.toLocaleString('id-ID')}</TableCell><TableCell>{tx.payment_method}</TableCell><TableCell className="text-green-600">+{tx.loyalty_points_earned}</TableCell></TableRow>
-                            ))}
+                            {transactions?.map((tx) =>
+                          <TableRow key={tx.id}><TableCell>{format(new Date(tx.transaction_date), 'd MMM yyyy')}</TableCell><TableCell>Rp {tx.total_amount.toLocaleString('id-ID')}</TableCell><TableCell>{tx.payment_method}</TableCell><TableCell className="text-green-600">+{tx.loyalty_points_earned}</TableCell></TableRow>
+                          )}
                           </TableBody>
                         </Table>
-                      )}
+                      }
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -145,24 +145,24 @@ export function CustomerProfile() {
                           <form onSubmit={handleSubmit(onFeedbackSubmit)} className="space-y-4">
                             <div>
                               <Label>Transaction</Label>
-                              <Controller name="transaction_id" control={control} render={({ field }) => (
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Controller name="transaction_id" control={control} render={({ field }) =>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
                                   <SelectTrigger><SelectValue placeholder="Select a recent transaction" /></SelectTrigger>
                                   <SelectContent>
-                                    {transactions?.map(tx => <SelectItem key={tx.id} value={tx.id}>Txn on {format(new Date(tx.transaction_date), 'd MMM yyyy')} - Rp {tx.total_amount.toLocaleString('id-ID')}</SelectItem>)}
+                                    {transactions?.map((tx) => <SelectItem key={tx.id} value={tx.id}>Txn on {format(new Date(tx.transaction_date), 'd MMM yyyy')} - Rp {tx.total_amount.toLocaleString('id-ID')}</SelectItem>)}
                                   </SelectContent>
                                 </Select>
-                              )} />
+                              } />
                               {errors.transaction_id && <p className="text-red-500 text-sm mt-1">{errors.transaction_id.message}</p>}
                             </div>
                             <div>
                               <Label>Rating</Label>
-                              <Controller name="rating" control={control} render={({ field }) => (
-                                <div className="flex items-center gap-2">
+                              <Controller name="rating" control={control} render={({ field }) =>
+                              <div className="flex items-center gap-2">
                                   <Slider defaultValue={[3]} min={1} max={5} step={1} onValueChange={(value) => field.onChange(value[0])} />
                                   <span className="font-bold text-primary w-4">{field.value}</span>
                                 </div>
-                              )} />
+                              } />
                             </div>
                             <div>
                               <Label>Comment (Optional)</Label>
@@ -174,22 +174,22 @@ export function CustomerProfile() {
                       </Dialog>
                     </CardHeader>
                     <CardContent>
-                      {isLoadingFeedback ? <Skeleton className="h-64 w-full" /> : feedback && feedback.length > 0 ? (
-                        <Table>
+                      {isLoadingFeedback ? <Skeleton className="h-64 w-full" /> : feedback && feedback.length > 0 ?
+                      <Table>
                           <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Rating</TableHead><TableHead>Comment</TableHead></TableRow></TableHeader>
                           <TableBody>
-                            {feedback.map(f => (
-                              <TableRow key={f.id}>
+                            {feedback.map((f) =>
+                          <TableRow key={f.id}>
                                 <TableCell>{format(new Date(f.feedback_date), 'd MMM yyyy')}</TableCell>
                                 <TableCell><div className="flex gap-0.5">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className={cn("h-4 w-4", i < f.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} />)}</div></TableCell>
                                 <TableCell className="text-muted-foreground">{f.comment}</TableCell>
                               </TableRow>
-                            ))}
+                          )}
                           </TableBody>
-                        </Table>
-                      ) : (
-                        <div className="text-center text-muted-foreground py-12"><p>No feedback history available.</p></div>
-                      )}
+                        </Table> :
+
+                      <div className="text-center text-muted-foreground py-12"><p>No feedback history available.</p></div>
+                      }
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -198,6 +198,6 @@ export function CustomerProfile() {
           </div>
         </div>
       </div>
-    </CustomerLayout>
-  );
+    </CustomerLayout>);
+
 }

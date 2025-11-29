@@ -7,19 +7,19 @@ import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth';
 import type { Promo, Customer } from '@shared/types';
 import { showNotification } from '@/components/NotificationToast';
-import { Progress } from '@/components/ui/progress';
+import { Progress } from '@/components/ui/progress';interface ButtonProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface ButtonProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}
 export function CustomerPromos() {
   const { customerId } = useAuth();
   const queryClient = useQueryClient();
   const { data: customer, isLoading: loadingCustomer } = useQuery<Customer>({
     queryKey: ['customer', customerId],
     queryFn: () => api(`/api/customers/${customerId}`),
-    enabled: !!customerId,
+    enabled: !!customerId
   });
   const { data: promos, isLoading: loadingPromos } = useQuery<Promo[]>({
     queryKey: ['promos', customerId],
     queryFn: () => api(`/api/promos?customer_id=${customerId}`),
-    enabled: !!customerId,
+    enabled: !!customerId
   });
   const handleRedeem = async (promoId: string) => {
     try {
@@ -34,11 +34,11 @@ export function CustomerPromos() {
     'Bronze': 500,
     'Silver': 2000,
     'Gold': 5000,
-    'Platinum': Infinity,
+    'Platinum': Infinity
   };
   const currentPoints = customer?.loyalty_points || 0;
   const nextLevelPoints = pointsToNextLevel[customer?.membership_level || 'Bronze'];
-  const progress = Math.min((currentPoints / nextLevelPoints) * 100, 100);
+  const progress = Math.min(currentPoints / nextLevelPoints * 100, 100);
   return (
     <CustomerLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,36 +52,36 @@ export function CustomerPromos() {
               <CardTitle>Your Loyalty Balance</CardTitle>
             </CardHeader>
             <CardContent>
-              {loadingCustomer || !customer ? (
-                <Skeleton className="h-24 w-full" />
-              ) : (
-                <div className="space-y-2">
+              {loadingCustomer || !customer ?
+              <Skeleton className="h-24 w-full" /> :
+
+              <div className="space-y-2">
                   <div className="flex items-baseline gap-4">
                     <span className="text-5xl font-bold text-primary">{customer.loyalty_points}</span>
                     <span className="text-muted-foreground">Points</span>
                   </div>
-                  {customer.membership_level !== 'Platinum' && (
-                    <div>
+                  {customer.membership_level !== 'Platinum' &&
+                <div>
                       <Progress value={progress} className="w-full" />
                       <p className="text-sm text-muted-foreground mt-2">
                         {nextLevelPoints - currentPoints} points to next level: {customer.membership_level === 'Bronze' ? 'Silver' : 'Gold'}
                       </p>
                     </div>
-                  )}
+                }
                 </div>
-              )}
+              }
             </CardContent>
           </Card>
           <div>
             <h2 className="text-2xl font-semibold mb-4">Available Promos</h2>
-            {loadingPromos ? (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {loadingPromos ?
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-64" />)}
-              </div>
-            ) : promos?.filter(p => p.is_active).length ? (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {promos.filter(p => p.is_active).map(promo => (
-                  <div key={promo.id} className="relative group flex flex-col">
+              </div> :
+            promos?.filter((p) => p.is_active).length ?
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {promos.filter((p) => p.is_active).map((promo) =>
+              <div key={promo.id} className="relative group flex flex-col">
                     <div className="flex-grow">
                       <PromoCard promo={promo} />
                     </div>
@@ -91,17 +91,17 @@ export function CustomerPromos() {
                       </Button>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center text-muted-foreground py-12 border rounded-lg">
+              )}
+              </div> :
+
+            <div className="text-center text-muted-foreground py-12 border rounded-lg">
                 <h3 className="text-xl font-semibold">No Promos Available</h3>
                 <p className="mt-2">Check back later for new offers!</p>
               </div>
-            )}
+            }
           </div>
         </div>
       </div>
-    </CustomerLayout>
-  );
+    </CustomerLayout>);
+
 }

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
 // Mock roles and permissions
 const permissions = {
   admin: ['/dashboard', '/customers', '/promos', '/reservations', '/reports'],
@@ -27,6 +26,10 @@ export const useAuth = () => {
   }, []);
   const hasAccess = (path: string) => {
     if (!role) return false;
+    // Special case for customer profile pages
+    if (path.startsWith('/customers/')) {
+        return permissions[role].includes('/customers');
+    }
     return permissions[role].some(p => path.startsWith(p));
   };
   return { token, role, isAuthenticated, isAdmin: role === 'admin', hasAccess };
@@ -37,15 +40,4 @@ export const setAuthToken = (token: string | null) => {
   } else {
     localStorage.removeItem('authToken');
   }
-};
-export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, hasAccess } = useAuth();
-  const location = useLocation();
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-  if (!hasAccess(location.pathname)) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  return <>{children}</>;
 };

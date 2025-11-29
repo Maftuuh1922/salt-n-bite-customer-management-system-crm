@@ -30,14 +30,14 @@ const seedMiddleware = async (c: any, next: any) => {
 const authMiddleware = async (c: any, next: any) => {
   const authHeader = c.req.header('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return bad(c, 'Unauthorized: Missing token', 401);
+    return bad(c, 'Unauthorized: Missing token');
   }
   const token = authHeader.replace('Bearer ', '');
   // In a real app, you'd verify a JWT. Here, we mock it.
   if (token === 'demo-admin-jwt') {
     c.set('role', 'admin');
   } else {
-    return bad(c, 'Unauthorized: Invalid token', 401);
+    return bad(c, 'Unauthorized: Invalid token');
   }
   await next();
 };
@@ -87,9 +87,9 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       Gold: { count: 0, total_spent: 0 },
       Platinum: { count: 0, total_spent: 0 },
     };
-    customers.forEach(c => {
-      groups[c.membership_level].count++;
-      groups[c.membership_level].total_spent += c.total_spent;
+    customers.forEach(cust => {
+      groups[cust.membership_level].count++;
+      groups[cust.membership_level].total_spent += cust.total_spent;
     });
     const result: CustomerGroup[] = Object.entries(groups).map(([level, data]) => ({
       level: level as MembershipLevel,
@@ -164,7 +164,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     }
     return ok(c, newTransaction);
   });
-  // PROMOS, RESERVATIONS, FEEDBACK, LOYALTY (Stubs from previous phase, assumed correct)
+  // PROMOS, RESERVATIONS, FEEDBACK, LOYALTY (Stubs)
   app.get('/api/promos/active', async (c) => ok(c, (await PromoEntity.list(c.env)).items.filter(p => p.is_active)));
   app.post('/api/reservations', async (c) => ok(c, {}));
   app.post('/api/feedback', async (c) => ok(c, {}));
@@ -172,9 +172,9 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.post('/api/notifications/whatsapp', async (c) => ok(c, {}));
   // REPORTING
   app.get('/api/reports/:type', async (c) => {
-    const role = c.get('role');
+    const role = (c as any).get('role');
     if (role !== 'admin' && role !== 'manager') {
-      return bad(c, 'Forbidden', 403);
+      return bad(c, 'Forbidden');
     }
     const type = c.req.param('type') as ReportType;
     const { start, end } = c.req.query();

@@ -17,7 +17,7 @@ import { CustomerProfile } from '@/pages/CustomerProfile';
 import { PromoManagement } from '@/pages/PromoManagement';
 import { ReservationManagement } from '@/pages/ReservationManagement';
 import { Reporting } from '@/pages/Reporting';
-import { ProtectedRoute } from '@/lib/auth';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

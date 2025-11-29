@@ -26,6 +26,7 @@ export interface Transaction {
   loyalty_points_earned: number;
   pos_transaction_id: string;
   items: { name: string; quantity: number; price: number }[];
+  promo_id?: string;
 }
 export interface Promo {
   id: string;
@@ -86,4 +87,22 @@ export interface ReportParams {
   type: ReportType;
   start: string;
   end: string;
+}
+export interface AggregatedReport {
+  type: ReportType;
+  period: { start: string; end: string };
+  metrics: {
+    total: number;
+    avg?: number;
+    [key: string]: number | undefined;
+  };
+  data: any[];
+}
+export interface Notification {
+  id: string;
+  customer_id: string;
+  type: 'promo' | 'birthday' | 'reservation';
+  message: string;
+  sent_at?: string;
+  status: 'queued' | 'sent' | 'failed';
 }

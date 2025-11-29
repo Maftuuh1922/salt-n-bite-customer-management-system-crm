@@ -1,5 +1,5 @@
 import { IndexedEntity } from "./core-utils";
-import type { Customer, Transaction, Promo, Reservation, Feedback, LoyaltyEvent, MembershipLevel } from "@shared/types";
+import type { Customer, Transaction, Promo, Reservation, Feedback, LoyaltyEvent, Notification } from "@shared/types";
 import { MOCK_CUSTOMERS, MOCK_TRANSACTIONS, MOCK_PROMOS, MOCK_RESERVATIONS, MOCK_FEEDBACK, MOCK_LOYALTY_EVENTS } from "@shared/mock-data";
 // CUSTOMER ENTITY
 export class CustomerEntity extends IndexedEntity<Customer> {
@@ -90,4 +90,17 @@ export class LoyaltyEventEntity extends IndexedEntity<LoyaltyEvent> {
     is_active: false,
   };
   static seedData = MOCK_LOYALTY_EVENTS;
+}
+// NOTIFICATION ENTITY
+export class NotificationEntity extends IndexedEntity<Notification> {
+  static readonly entityName = "notification";
+  static readonly indexName = "notifications";
+  static readonly initialState: Notification = {
+    id: "",
+    customer_id: "",
+    type: 'promo',
+    message: "",
+    status: 'queued',
+  };
+  static seedData = [];
 }

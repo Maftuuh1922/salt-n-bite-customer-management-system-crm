@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { ok, bad, notFound, isStr } from './core-utils';
-import { CustomerEntity, TransactionEntity, PromoEntity, ReservationEntity, FeedbackEntity, LoyaltyEventEntity } from './entities';
-import type { Customer, DashboardStats, Transaction, Reservation, Feedback } from "@shared/types";
-import { subDays, format } from 'date-fns';
+import { CustomerEntity, TransactionEntity, PromoEntity, ReservationEntity, FeedbackEntity, LoyaltyEventEntity, NotificationEntity } from './entities';
+import type { Customer, DashboardStats, Transaction, Reservation, Feedback, Notification, AggregatedReport, ReportType } from "@shared/types";
+import { subDays, format, parseISO, isWithinInterval } from 'date-fns';
 // Middleware for seeding data on first request
 let seeded = false;
 const seedMiddleware = async (c: any, next: any) => {
@@ -16,6 +16,7 @@ const seedMiddleware = async (c: any, next: any) => {
         ReservationEntity.ensureSeed(c.env),
         FeedbackEntity.ensureSeed(c.env),
         LoyaltyEventEntity.ensureSeed(c.env),
+        NotificationEntity.ensureSeed(c.env),
       ]);
       seeded = true;
       console.log('Database seeded successfully.');
@@ -165,5 +166,51 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     };
     const newFeedback = await FeedbackEntity.create(c.env, newFeedbackData);
     return ok(c, newFeedback);
+  });
+  // NOTIFICATIONS
+  app.post('/api/notifications/whatsapp', async (c) => {
+    const { customer_id, type, message } = await c.req.json<Partial<Notification>>();
+    if (!customer_id || !type || !message) return bad(c, 'Missing required fields');
+    const newNotification: Notification = {
+      id: crypto.randomUUID(),
+      customer_id,
+      type,
+      message,
+      status: 'queued',
+    };
+    await NotificationEntity.create(c.env, newNotification);
+    console.log(`[WhatsApp Mock] Queued message for ${customer_id}: "${message}"`);
+    return ok(c, { message: 'Notification queued successfully' });
+  });
+  // REPORTING
+  app.get('/api/reports/:type', async (c) => {
+    const type = c.req.param('type') as ReportType;
+    const { start, end } = c.req.query();
+    if (!start || !end) return bad(c, 'Start and end dates are required');
+    const startDate = parseISO(start);
+    const endDate = parseISO(end);
+    const transactions = (await TransactionEntity.list(c.env)).items.filter(t =>
+      isWithinInterval(parseISO(t.transaction_date), { start: startDate, end: endDate })
+    );
+    let report: AggregatedReport;
+    switch (type) {
+      case 'customer-activity':
+        const totalRevenue = transactions.reduce((sum, t) => sum + t.total_amount, 0);
+        const activityByDate = transactions.reduce((acc, t) => {
+          const date = format(parseISO(t.transaction_date), 'yyyy-MM-dd');
+          acc[date] = (acc[date] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+        report = {
+          type,
+          period: { start, end },
+          metrics: { total: transactions.length, totalRevenue },
+          data: Object.entries(activityByDate).map(([date, visits]) => ({ date, visits })),
+        };
+        break;
+      default:
+        return notFound(c, 'Report type not found');
+    }
+    return ok(c, report);
   });
 }

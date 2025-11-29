@@ -77,7 +77,10 @@ function updateWranglerJsonc() {
 }
 
 function runSetupCommands() {
-    const commands = [];
+    const commands = [
+    "bun add jspdf@^2.5.1",
+    "bun add xlsx@^0.18.5"
+];
     
     if (commands.length === 0) {
         console.log('⊘ No setup commands to run');

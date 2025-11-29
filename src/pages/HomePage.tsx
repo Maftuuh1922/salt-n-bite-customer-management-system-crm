@@ -62,7 +62,7 @@ export function HomePage() {
     activePromos: loading || !stats ? 0 : stats.activePromos,
   };
   return (
-    <div className="bg-background text-foreground">
+    <div className="bg-background text-foreground batik-bg">
       <ThemeToggle className="fixed top-4 right-4" />
       <Hero stats={heroStats} />
       <main>

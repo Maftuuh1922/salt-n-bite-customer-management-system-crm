@@ -51,9 +51,6 @@ export function Hero({ stats }: { stats: { totalCustomers: number; todaysVisits:
                 Open Dashboard <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-white border-white/50 hover:bg-white/10 hover:text-white">
-              Learn More
-            </Button>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}

@@ -23,7 +23,8 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useState, useEffect } from 'react';
-import { CustomerLayout } from '@/components/layout/CustomerLayout';function cn<T = unknown>(...args: unknown[]): T | null {console.warn('cn is not implemented', args);return null as T | null;}
+import { CustomerLayout } from '@/components/layout/CustomerLayout';
+import { cn } from '@/lib/utils';
 const decrypt = (str: string | undefined) => str ? atob(str) : 'N/A';
 const feedbackSchema = z.object({
   transaction_id: z.string().min(1, "Please select a transaction"),
@@ -87,14 +88,13 @@ export function CustomerProfile() {
           </div>
         </div>
       </CustomerLayout>);
-
   }
   if (!customer) {
     return <CustomerLayout><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12 text-center">Customer not found.</div></CustomerLayout>;
   }
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12 batik-bg">
         <div className="grid md:grid-cols-3 gap-8">
           <div className="md:col-span-1 space-y-6">
             <Card>
@@ -187,7 +187,6 @@ export function CustomerProfile() {
                           )}
                           </TableBody>
                         </Table> :
-
                       <div className="text-center text-muted-foreground py-12"><p>No feedback history available.</p></div>
                       }
                     </CardContent>
@@ -199,5 +198,4 @@ export function CustomerProfile() {
         </div>
       </div>
     </CustomerLayout>);
-
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, Users, Tag, Calendar, BarChart2, Settings, LifeBuoy } from "lucide-react";
+import { Home, Users, Tag, Calendar, BarChart2, UserCheck } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -69,18 +69,15 @@ export function AppSidebar(): JSX.Element {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <a href="#"><LifeBuoy /> <span>Support</span></a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <a href="#"><Settings /> <span>Settings</span></a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        {role === 'admin' && (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link to="/customer/login"><UserCheck /> <span>Customer Portal</span></Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

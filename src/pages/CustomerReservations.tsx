@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { PlusCircle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { Reservation, ReservationCreate, Customer, EncryptedCustomer } from '@shared/types';
+import { Reservation, ReservationCreate, EncryptedCustomer } from '@shared/types';
 import { format, formatISO } from 'date-fns';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,9 +22,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth';
 const reservationSchema = z.object({
   reservation_time: z.string().min(1, "Time is required"),
-  number_of_guests: z.string().refine(val => !isNaN(parseInt(val, 10)) && parseInt(val, 10) >= 1, {
-    message: "Must be a number greater than 0",
-  }).transform(Number),
+  number_of_guests: z.coerce.number().min(1, "Must be a number greater than 0"),
   notes: z.string().optional(),
 });
 type ReservationFormData = z.infer<typeof reservationSchema>;

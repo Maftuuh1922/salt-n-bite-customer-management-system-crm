@@ -7,7 +7,8 @@ import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth';
 import type { Promo, Customer } from '@shared/types';
 import { showNotification } from '@/components/NotificationToast';
-import { Progress } from '@/components/ui/progress';interface ButtonProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface ButtonProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 export function CustomerPromos() {
   const { customerId } = useAuth();
   const queryClient = useQueryClient();
@@ -54,7 +55,6 @@ export function CustomerPromos() {
             <CardContent>
               {loadingCustomer || !customer ?
               <Skeleton className="h-24 w-full" /> :
-
               <div className="space-y-2">
                   <div className="flex items-baseline gap-4">
                     <span className="text-5xl font-bold text-primary">{customer.loyalty_points}</span>
@@ -81,19 +81,9 @@ export function CustomerPromos() {
             promos?.filter((p) => p.is_active).length ?
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {promos.filter((p) => p.is_active).map((promo) =>
-              <div key={promo.id} className="relative group flex flex-col">
-                    <div className="flex-grow">
-                      <PromoCard promo={promo} />
-                    </div>
-                    <div className="p-4 pt-0 -mt-4">
-                      <Button onClick={() => handleRedeem(promo.id)} className="w-full">
-                        Redeem for 50 Points
-                      </Button>
-                    </div>
-                  </div>
+                  <PromoCard key={promo.id} promo={promo} showRedeemButton={true} onRedeem={handleRedeem} />
               )}
               </div> :
-
             <div className="text-center text-muted-foreground py-12 border rounded-lg">
                 <h3 className="text-xl font-semibold">No Promos Available</h3>
                 <p className="mt-2">Check back later for new offers!</p>
@@ -103,5 +93,4 @@ export function CustomerPromos() {
         </div>
       </div>
     </CustomerLayout>);
-
 }

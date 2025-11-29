@@ -170,7 +170,7 @@ export function PromoManagement() {
               ))}
             </div>
           ) : (
-            <div className="text-center text-muted-foreground py-12 border rounded-lg"><p>No active promos.</p></div>
+            <div className="text-center text-muted-foreground py-12 border rounded-lg"><p>No active promos. Create one to get started!</p></div>
           )}
         </div>
         <div>

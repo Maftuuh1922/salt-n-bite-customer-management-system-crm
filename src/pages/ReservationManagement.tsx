@@ -22,9 +22,7 @@ import { motion } from 'framer-motion';
 const reservationSchema = z.object({
   customer_phone: z.string().min(10, "Phone number is required"),
   reservation_time: z.string().min(1, "Time is required"),
-  number_of_guests: z.string().refine(val => !isNaN(parseInt(val, 10)) && parseInt(val, 10) >= 1, {
-    message: "Must be a number greater than 0",
-  }).transform(Number),
+  number_of_guests: z.coerce.number().min(1, "Must be a number greater than 0"),
   notes: z.string().optional(),
 });
 type ReservationFormData = z.infer<typeof reservationSchema>;

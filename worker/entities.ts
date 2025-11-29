@@ -1,5 +1,5 @@
 import { IndexedEntity } from "./core-utils";
-import type { Customer, Transaction, Promo, Reservation, Feedback, LoyaltyEvent, Notification } from "@shared/types";
+import type { Customer, Transaction, Promo, Reservation, Feedback, LoyaltyEvent, Notification, MembershipLevel } from "@shared/types";
 import { MOCK_CUSTOMERS, MOCK_TRANSACTIONS, MOCK_PROMOS, MOCK_RESERVATIONS, MOCK_FEEDBACK, MOCK_LOYALTY_EVENTS } from "@shared/mock-data";
 // CUSTOMER ENTITY
 export class CustomerEntity extends IndexedEntity<Customer> {
@@ -19,8 +19,8 @@ export class CustomerEntity extends IndexedEntity<Customer> {
   };
   static seedData = [
     ...MOCK_CUSTOMERS,
-    { id: 'cust_6', phone_number: '+6281345678900', name: 'Demo Customer', email: 'demo@example.com', membership_level: 'Silver', total_visits: 3, total_spent: 150000, loyalty_points: 30, registration_date: new Date().toISOString(), last_visit: new Date().toISOString(), avatarUrl: 'https://api.dicebear.com/8.x/adventurer/svg?seed=Demo' },
-    { id: 'cust_7', phone_number: '+6281456789012', name: 'Test User', membership_level: 'Bronze', total_visits: 1, total_spent: 50000, loyalty_points: 5, registration_date: new Date().toISOString(), last_visit: new Date().toISOString(), avatarUrl: 'https://api.dicebear.com/8.x/adventurer/svg?seed=Test' }
+    { id: 'cust_6', phone_number: '+6281345678900', name: 'Demo Customer', email: 'demo@example.com', membership_level: 'Silver' as MembershipLevel, total_visits: 3, total_spent: 150000, loyalty_points: 30, registration_date: new Date().toISOString(), last_visit: new Date().toISOString(), avatarUrl: 'https://api.dicebear.com/8.x/adventurer/svg?seed=Demo' },
+    { id: 'cust_7', phone_number: '+6281456789012', name: 'Test User', membership_level: 'Bronze' as MembershipLevel, total_visits: 1, total_spent: 50000, loyalty_points: 5, registration_date: new Date().toISOString(), last_visit: new Date().toISOString(), avatarUrl: 'https://api.dicebear.com/8.x/adventurer/svg?seed=Test' }
   ];
 }
 // TRANSACTION ENTITY

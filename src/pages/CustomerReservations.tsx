@@ -5,13 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { Reservation, ReservationCreate, Customer } from '@shared/types';
+import { Reservation, ReservationCreate, Customer, EncryptedCustomer } from '@shared/types';
 import { format, formatISO } from 'date-fns';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,7 +22,9 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth';
 const reservationSchema = z.object({
   reservation_time: z.string().min(1, "Time is required"),
-  number_of_guests: z.coerce.number().int().min(1, "At least one guest is required"),
+  number_of_guests: z.string().refine(val => !isNaN(parseInt(val, 10)) && parseInt(val, 10) >= 1, {
+    message: "Must be a number greater than 0",
+  }).transform(Number),
   notes: z.string().optional(),
 });
 type ReservationFormData = z.infer<typeof reservationSchema>;
@@ -31,13 +33,16 @@ export function CustomerReservations() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const queryClient = useQueryClient();
   const { customerId } = useAuth();
-  const { data: customer } = useQuery<Customer>({
+  const { data: customer } = useQuery<EncryptedCustomer>({
     queryKey: ['customer', customerId],
     queryFn: () => api(`/api/customers/${customerId}`),
     enabled: !!customerId,
   });
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ReservationFormData>({
     resolver: zodResolver(reservationSchema),
+    defaultValues: {
+      number_of_guests: 1,
+    }
   });
   const { data: reservations = [], isLoading } = useQuery({
     queryKey: ['reservations', customerId, date],
@@ -78,78 +83,80 @@ export function CustomerReservations() {
     createMutation.mutate(reservationData);
   };
   return (
-    <CustomerLayout container>
-      <div className="space-y-8">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">My Reservations</h1>
-          <Button onClick={() => setIsSheetOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> New Reservation</Button>
-        </div>
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>New Reservation</SheetTitle>
-              <SheetDescription>Book a table at Salt N Bite.</SheetDescription>
-            </SheetHeader>
-            <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 py-4">
-              <div>
-                <Label>Date: {date ? format(date, 'PPP') : 'Select a date'}</Label>
-              </div>
-              <div>
-                <Label htmlFor="reservation_time">Time</Label>
-                <Input id="reservation_time" type="time" {...register('reservation_time')} />
-                {errors.reservation_time && <p className="text-red-500 text-sm mt-1">{errors.reservation_time.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="number_of_guests">Guests</Label>
-                <Input id="number_of_guests" type="number" {...register('number_of_guests')} />
-                {errors.number_of_guests && <p className="text-red-500 text-sm mt-1">{errors.number_of_guests.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="notes">Notes (Optional)</Label>
-                <Input id="notes" {...register('notes')} />
-              </div>
-              <Button type="submit" className="w-full" disabled={createMutation.isPending}>Book Table</Button>
-            </form>
-          </SheetContent>
-        </Sheet>
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="md:col-span-1">
-            <Card>
-              <CardContent className="p-0">
-                <Calendar mode="single" selected={date} onSelect={setDate} className="rounded-md" />
-              </CardContent>
-            </Card>
+    <CustomerLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="py-8 md:py-10 lg:py-12 space-y-8">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold">My Reservations</h1>
+            <Button onClick={() => setIsSheetOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> New Reservation</Button>
           </div>
-          <div className="md:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Reservations for {date ? format(date, 'PPP') : 'today'}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? <Skeleton className="h-48 w-full" /> : reservations.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Time</TableHead>
-                        <TableHead>Guests</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {reservations.map((res, index) => (
-                        <motion.tr key={res.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}>
-                          <TableCell>{format(new Date(res.reservation_date), 'HH:mm')}</TableCell>
-                          <TableCell>{res.number_of_guests}</TableCell>
-                          <TableCell><Badge>{res.status}</Badge></TableCell>
-                        </motion.tr>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="text-center text-muted-foreground py-12"><p>No reservations for this date.</p></div>
-                )}
-              </CardContent>
-            </Card>
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>New Reservation</SheetTitle>
+                <SheetDescription>Book a table at Salt N Bite.</SheetDescription>
+              </SheetHeader>
+              <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 py-4">
+                <div>
+                  <Label>Date: {date ? format(date, 'PPP') : 'Select a date'}</Label>
+                </div>
+                <div>
+                  <Label htmlFor="reservation_time">Time</Label>
+                  <Input id="reservation_time" type="time" {...register('reservation_time')} />
+                  {errors.reservation_time && <p className="text-red-500 text-sm mt-1">{errors.reservation_time.message}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="number_of_guests">Guests</Label>
+                  <Input id="number_of_guests" type="number" {...register('number_of_guests')} />
+                  {errors.number_of_guests && <p className="text-red-500 text-sm mt-1">{errors.number_of_guests.message}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="notes">Notes (Optional)</Label>
+                  <Input id="notes" {...register('notes')} />
+                </div>
+                <Button type="submit" className="w-full" disabled={createMutation.isPending}>Book Table</Button>
+              </form>
+            </SheetContent>
+          </Sheet>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="md:col-span-1">
+              <Card>
+                <CardContent className="p-0">
+                  <Calendar mode="single" selected={date} onSelect={setDate} className="rounded-md" />
+                </CardContent>
+              </Card>
+            </div>
+            <div className="md:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Reservations for {date ? format(date, 'PPP') : 'today'}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoading ? <Skeleton className="h-48 w-full" /> : reservations.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Time</TableHead>
+                          <TableHead>Guests</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {reservations.map((res, index) => (
+                          <motion.tr key={res.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}>
+                            <TableCell>{format(new Date(res.reservation_date), 'HH:mm')}</TableCell>
+                            <TableCell>{res.number_of_guests}</TableCell>
+                            <TableCell><Badge>{res.status}</Badge></TableCell>
+                          </motion.tr>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-center text-muted-foreground py-12"><p>No reservations for this date.</p></div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

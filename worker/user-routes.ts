@@ -79,9 +79,9 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   });
   // CUSTOMERS
   app.get('/api/customers', async (c) => {
-    const role = c.get('role');
+    const role = (c as any).get('role');
     if (role === 'customer') {
-      const customerId = c.get('customer_id');
+      const customerId = (c as any).get('customer_id');
       const customer = new CustomerEntity(c.env, customerId);
       if (!(await customer.exists())) return notFound(c, 'Customer not found');
       const state = await customer.getState();
@@ -97,20 +97,20 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     return ok(c, result);
   });
   app.get('/api/customers/:id', async (c) => {
-    const role = c.get('role');
-    const customerId = c.get('customer_id');
+    const role = (c as any).get('role');
+    const customerId = (c as any).get('customer_id');
     const requestedId = c.req.param('id');
-    if (role === 'customer' && requestedId !== customerId) return bad(c, 'Access denied', 403);
+    if (role === 'customer' && requestedId !== customerId) return bad(c, 'Access denied');
     const customer = new CustomerEntity(c.env, requestedId);
     if (!(await customer.exists())) return notFound(c, 'Customer not found');
     const state = await customer.getState();
     return ok(c, { ...state, phone_number: encrypt(state.phone_number), email: encrypt(state.email) });
   });
   app.get('/api/customers/:id/transactions', async (c) => {
-    const role = c.get('role');
-    const customerId = c.get('customer_id');
+    const role = (c as any).get('role');
+    const customerId = (c as any).get('customer_id');
     const requestedId = c.req.param('id');
-    if (role === 'customer' && requestedId !== customerId) return bad(c, 'Access denied', 403);
+    if (role === 'customer' && requestedId !== customerId) return bad(c, 'Access denied');
     return ok(c, (await TransactionEntity.list(c.env)).items.filter(t => t.customer_id === requestedId));
   });
   app.post('/api/customers/register', async (c) => {
@@ -174,6 +174,26 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     if (!deleted) return notFound(c, 'Promo not found');
     console.log(`[AUDIT] Promo deleted: ${id}`);
     return ok(c, { id });
+  });
+  app.post('/api/promos/redeem', async (c) => {
+    const { promo_id, customer_id } = c.req.query();
+    const role = (c as any).get('role');
+    const authCustomerId = (c as any).get('customer_id');
+    if (role !== 'customer' || authCustomerId !== customer_id) return bad(c, 'Access denied');
+    if (!promo_id || !customer_id) return bad(c, 'Missing promo_id or customer_id');
+    const promoEntity = new PromoEntity(c.env, promo_id);
+    if (!(await promoEntity.exists())) return notFound(c, 'Promo not found');
+    const promo = await promoEntity.getState();
+    if (!promo.is_active || !isWithinInterval(new Date(), { start: parseISO(promo.start_date), end: parseISO(promo.end_date) })) return bad(c, 'Promo not active');
+    const customerEntity = new CustomerEntity(c.env, customer_id);
+    if (!(await customerEntity.exists())) return notFound(c, 'Customer not found');
+    const customer = await customerEntity.getState();
+    if (customer.membership_level.toLowerCase() !== promo.promo_type && promo.promo_type !== 'event' && promo.promo_type !== 'birthday') return bad(c, 'Not eligible for this promo');
+    const cost = 50; // Stub cost
+    if (customer.loyalty_points < cost) return bad(c, 'Insufficient points');
+    const updatedCustomer = await customerEntity.mutate(s => ({ ...s, loyalty_points: s.loyalty_points - cost }));
+    await NotificationEntity.create(c.env, { id: crypto.randomUUID(), customer_id, type: 'promo', message: `You redeemed ${promo.promo_name}!`, status: 'queued' });
+    return ok(c, updatedCustomer);
   });
   // RESERVATIONS
   app.post('/api/reservations', async (c) => {
@@ -251,10 +271,10 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     return ok(c, fb);
   });
   app.get('/api/feedback/:customer_id', async (c) => {
-    const role = c.get('role');
-    const authCustomerId = c.get('customer_id');
+    const role = (c as any).get('role');
+    const authCustomerId = (c as any).get('customer_id');
     const requestedId = c.req.param('customer_id');
-    if (role === 'customer' && requestedId !== authCustomerId) return bad(c, 'Access denied', 403);
+    if (role === 'customer' && requestedId !== authCustomerId) return bad(c, 'Access denied');
     const all = await FeedbackEntity.list(c.env);
     return ok(c, all.items.filter(f => f.customer_id === requestedId));
   });

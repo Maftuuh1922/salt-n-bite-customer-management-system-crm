@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -42,6 +42,7 @@ const FeatureCard = ({ icon, title, description, link }: { icon: React.ElementTy
 export function HomePage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   useEffect(() => {
     // Prefill demo auth token for Phase 1
     setAuthToken('demo-admin-jwt');
@@ -50,7 +51,10 @@ export function HomePage() {
         setStats(data);
       })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setAuthToken(null); // Clear token after fetching stats
+      });
   }, []);
   const heroStats = {
     totalCustomers: loading || !stats ? 0 : stats.totalCustomers,
@@ -63,6 +67,22 @@ export function HomePage() {
       <Hero stats={heroStats} />
       <main>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="py-16 md:py-24">
+            <div className="text-center">
+              <h2 className="text-3xl md:text-4xl font-bold font-display">Get Started</h2>
+              <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+                Access the portal as an administrator or a customer.
+              </p>
+              <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+                <Button size="lg" onClick={() => { setAuthToken('demo-admin-jwt'); navigate('/dashboard'); }}>
+                  Admin Portal <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button size="lg" variant="outline" onClick={() => navigate('/customer/login')}>
+                  Customer Portal <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
           <div className="py-16 md:py-24 lg:py-32">
             <div className="text-center">
               <h2 className="text-3xl md:text-4xl font-bold font-display">Core Features</h2>
@@ -95,7 +115,7 @@ export function HomePage() {
                     icon={Users}
                     title="Customer Profiles"
                     description="Access detailed customer histories, including transactions, visits, and loyalty status."
-                    link="/customers/cust_1"
+                    link="/customers"
                   />
                   <FeatureCard
                     icon={Gift}

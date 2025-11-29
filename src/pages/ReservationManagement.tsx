@@ -21,18 +21,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 const reservationSchema = z.object({
   customer_phone: z.string().min(10, "Phone number is required"),
-  reservation_date: z.string(), // This will be set from the calendar state
   reservation_time: z.string().min(1, "Time is required"),
-  number_of_guests: z.coerce.number().int().min(1, "At least one guest is required"),
+  number_of_guests: z.coerce.number({ invalid_type_error: "Must be a number" }).int().min(1, "At least one guest is required"),
   notes: z.string().optional(),
 });
-type ReservationFormData = Omit<ReservationCreate, 'reservation_date'>;
+type ReservationFormData = z.infer<typeof reservationSchema>;
 export function ReservationManagement() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const queryClient = useQueryClient();
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ReservationFormData>({
-    resolver: zodResolver(reservationSchema.omit({ reservation_date: true })),
+    resolver: zodResolver(reservationSchema),
   });
   const { data: reservations = [], isLoading } = useQuery({
     queryKey: ['reservations', date],

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -47,6 +47,10 @@ export function CustomerLogin() {
       setIsLoading(false);
     }
   };
+  const handleGuestLogin = () => {
+    setAuthToken('customer-jwt-cust_1');
+    navigate('/customer/dashboard');
+  };
   return (
     <div className="min-h-screen flex items-center justify-center batik-bg p-4">
       <Toaster richColors closeButton />
@@ -77,6 +81,11 @@ export function CustomerLogin() {
               <Button variant="link" onClick={() => setStep('phone')} className="w-full">Back</Button>
             </form>
           )}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+            <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or</span></div>
+          </div>
+          <Button variant="outline" className="w-full" onClick={handleGuestLogin}>Continue as Guest</Button>
         </CardContent>
       </Card>
     </div>

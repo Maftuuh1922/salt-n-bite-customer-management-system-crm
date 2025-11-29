@@ -17,7 +17,11 @@ export class CustomerEntity extends IndexedEntity<Customer> {
     registration_date: "",
     last_visit: "",
   };
-  static seedData = MOCK_CUSTOMERS;
+  static seedData = [
+    ...MOCK_CUSTOMERS,
+    { id: 'cust_6', phone_number: '+6281345678900', name: 'Demo Customer', email: 'demo@example.com', membership_level: 'Silver', total_visits: 3, total_spent: 150000, loyalty_points: 30, registration_date: new Date().toISOString(), last_visit: new Date().toISOString(), avatarUrl: 'https://api.dicebear.com/8.x/adventurer/svg?seed=Demo' },
+    { id: 'cust_7', phone_number: '+6281456789012', name: 'Test User', membership_level: 'Bronze', total_visits: 1, total_spent: 50000, loyalty_points: 5, registration_date: new Date().toISOString(), last_visit: new Date().toISOString(), avatarUrl: 'https://api.dicebear.com/8.x/adventurer/svg?seed=Test' }
+  ];
 }
 // TRANSACTION ENTITY
 export class TransactionEntity extends IndexedEntity<Transaction> {

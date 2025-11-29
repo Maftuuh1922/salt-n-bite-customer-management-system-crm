@@ -29,13 +29,30 @@ const authMiddleware = async (c: any, next: any) => {
   const authHeader = c.req.header('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) return bad(c, 'Unauthorized: Missing token');
   const token = authHeader.replace('Bearer ', '');
-  if (token === 'demo-admin-jwt') c.set('role', 'admin');
-  else c.set('role', 'staff');
+  if (token.startsWith('customer-jwt-')) {
+    const customerId = token.split('-')[2];
+    c.set('role', 'customer');
+    c.set('customer_id', customerId);
+  } else if (token === 'demo-admin-jwt') {
+    c.set('role', 'admin');
+  } else {
+    c.set('role', 'staff');
+  }
   await next();
 };
 const encrypt = (str: string | undefined) => str ? btoa(str) : undefined;
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.use('/api/*', seedMiddleware);
+  // Public route for login
+  app.post('/api/customers/login', async (c) => {
+    const { phone_number, otp } = await c.req.json<{ phone_number: string, otp: string }>();
+    if (!isStr(phone_number) || otp !== '1234') return bad(c, 'Invalid credentials');
+    const all = await CustomerEntity.list(c.env);
+    const customer = all.items.find(cust => cust.phone_number === phone_number);
+    if (!customer) return notFound(c, 'Customer not found');
+    const token = `customer-jwt-${customer.id}`;
+    return ok(c, { token, customer: { ...customer, phone_number: encrypt(customer.phone_number), email: encrypt(customer.email) } });
+  });
   app.use('/api/*', authMiddleware);
   // DASHBOARD
   app.get('/api/dashboard/stats', async (c) => {
@@ -61,7 +78,17 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     return ok(c, stats);
   });
   // CUSTOMERS
-  app.get('/api/customers', async (c) => ok(c, (await CustomerEntity.list(c.env)).items));
+  app.get('/api/customers', async (c) => {
+    const role = c.get('role');
+    if (role === 'customer') {
+      const customerId = c.get('customer_id');
+      const customer = new CustomerEntity(c.env, customerId);
+      if (!(await customer.exists())) return notFound(c, 'Customer not found');
+      const state = await customer.getState();
+      return ok(c, [{ ...state, phone_number: encrypt(state.phone_number), email: encrypt(state.email) }]);
+    }
+    return ok(c, (await CustomerEntity.list(c.env)).items);
+  });
   app.get('/api/customers/group', async (c) => {
     const customers = (await CustomerEntity.list(c.env)).items;
     const groups: Record<MembershipLevel, { count: number; total_spent: number }> = { Bronze: { count: 0, total_spent: 0 }, Silver: { count: 0, total_spent: 0 }, Gold: { count: 0, total_spent: 0 }, Platinum: { count: 0, total_spent: 0 } };
@@ -70,12 +97,22 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     return ok(c, result);
   });
   app.get('/api/customers/:id', async (c) => {
-    const customer = new CustomerEntity(c.env, c.req.param('id'));
+    const role = c.get('role');
+    const customerId = c.get('customer_id');
+    const requestedId = c.req.param('id');
+    if (role === 'customer' && requestedId !== customerId) return bad(c, 'Access denied', 403);
+    const customer = new CustomerEntity(c.env, requestedId);
     if (!(await customer.exists())) return notFound(c, 'Customer not found');
     const state = await customer.getState();
     return ok(c, { ...state, phone_number: encrypt(state.phone_number), email: encrypt(state.email) });
   });
-  app.get('/api/customers/:id/transactions', async (c) => ok(c, (await TransactionEntity.list(c.env)).items.filter(t => t.customer_id === c.req.param('id'))));
+  app.get('/api/customers/:id/transactions', async (c) => {
+    const role = c.get('role');
+    const customerId = c.get('customer_id');
+    const requestedId = c.req.param('id');
+    if (role === 'customer' && requestedId !== customerId) return bad(c, 'Access denied', 403);
+    return ok(c, (await TransactionEntity.list(c.env)).items.filter(t => t.customer_id === requestedId));
+  });
   app.post('/api/customers/register', async (c) => {
     const { phone_number, name, email } = await c.req.json<{ phone_number: string, name: string, email?: string }>();
     if (!isStr(phone_number) || !isStr(name)) return bad(c, 'Phone number and name are required');
@@ -102,7 +139,18 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     return ok(c, newTx);
   });
   // PROMOS
-  app.get('/api/promos', async (c) => ok(c, (await PromoEntity.list(c.env)).items));
+  app.get('/api/promos', async (c) => {
+    const customer_id = c.req.query('customer_id');
+    let promos = (await PromoEntity.list(c.env)).items;
+    if (customer_id) {
+      const customer = new CustomerEntity(c.env, customer_id);
+      if (await customer.exists()) {
+        const state = await customer.getState();
+        promos = promos.filter(p => p.promo_type === 'event' || p.promo_type === 'birthday' || p.promo_type === state.membership_level.toLowerCase());
+      }
+    }
+    return ok(c, promos);
+  });
   app.post('/api/promos', async (c) => {
     const { promo_name, promo_type, description, start_date, end_date } = await c.req.json<Partial<Promo>>();
     if (!isStr(promo_name) || !isStr(promo_type) || !isStr(start_date)) return bad(c, 'Invalid promo data');
@@ -145,8 +193,12 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   });
   app.get('/api/reservations/upcoming', async (c) => {
     const date = c.req.query('date');
+    const customer_id = c.req.query('customer_id');
     if (!date) return bad(c, 'Date query parameter is required');
-    const all = (await ReservationEntity.list(c.env)).items;
+    let all = (await ReservationEntity.list(c.env)).items;
+    if (customer_id) {
+      all = all.filter(r => r.customer_id === customer_id);
+    }
     const upcoming = all.filter(r => r.reservation_date.startsWith(date) && r.status !== 'cancelled');
     return ok(c, upcoming);
   });
@@ -199,9 +251,12 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     return ok(c, fb);
   });
   app.get('/api/feedback/:customer_id', async (c) => {
-    const id = c.req.param('customer_id');
+    const role = c.get('role');
+    const authCustomerId = c.get('customer_id');
+    const requestedId = c.req.param('customer_id');
+    if (role === 'customer' && requestedId !== authCustomerId) return bad(c, 'Access denied', 403);
     const all = await FeedbackEntity.list(c.env);
-    return ok(c, all.items.filter(f => f.customer_id === id));
+    return ok(c, all.items.filter(f => f.customer_id === requestedId));
   });
   // NOTIFICATIONS
   app.post('/api/notifications/whatsapp', async (c) => {

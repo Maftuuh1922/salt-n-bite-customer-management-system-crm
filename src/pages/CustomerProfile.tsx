@@ -1,4 +1,3 @@
-import { useParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -8,14 +7,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Star, Gift, Phone, Mail, Calendar, DollarSign, PlusCircle } from 'lucide-react';
+import { Star, Phone, Mail, Calendar } from 'lucide-react';
 import { api } from '@/lib/api-client';
-import type { Customer, Transaction, Reservation, Feedback, EncryptedCustomer, FeedbackCreate } from '@shared/types';
+import type { Customer, Transaction, Feedback, EncryptedCustomer, FeedbackCreate } from '@shared/types';
 import { format } from 'date-fns';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
@@ -25,6 +23,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useState } from 'react';
+import { CustomerLayout } from '@/components/layout/CustomerLayout';
 const decrypt = (str: string | undefined) => str ? atob(str) : 'N/A';
 const feedbackSchema = z.object({
   transaction_id: z.string().min(1, "Please select a transaction"),
@@ -33,24 +32,23 @@ const feedbackSchema = z.object({
 });
 type FeedbackFormData = z.infer<typeof feedbackSchema>;
 export function CustomerProfile() {
-  const { id } = useParams<{ id: string }>();
-  const { isAdmin } = useAuth();
+  const { customerId } = useAuth();
   const queryClient = useQueryClient();
   const [isFeedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const { data: customer, isLoading: isLoadingCustomer } = useQuery({
-    queryKey: ['customer', id],
-    queryFn: () => api<EncryptedCustomer>(`/api/customers/${id}`),
-    enabled: !!id,
+    queryKey: ['customer', customerId],
+    queryFn: () => api<EncryptedCustomer>(`/api/customers/${customerId}`),
+    enabled: !!customerId,
   });
   const { data: transactions, isLoading: isLoadingTransactions } = useQuery({
-    queryKey: ['transactions', id],
-    queryFn: () => api<Transaction[]>(`/api/customers/${id}/transactions`),
-    enabled: !!id,
+    queryKey: ['transactions', customerId],
+    queryFn: () => api<Transaction[]>(`/api/customers/${customerId}/transactions`),
+    enabled: !!customerId,
   });
   const { data: feedback, isLoading: isLoadingFeedback } = useQuery({
-    queryKey: ['feedback', id],
-    queryFn: () => api<Feedback[]>(`/api/feedback/${id}`),
-    enabled: !!id,
+    queryKey: ['feedback', customerId],
+    queryFn: () => api<Feedback[]>(`/api/feedback/${customerId}`),
+    enabled: !!customerId,
   });
   const { control, handleSubmit, reset, formState: { errors } } = useForm<FeedbackFormData>({
     resolver: zodResolver(feedbackSchema),
@@ -59,7 +57,7 @@ export function CustomerProfile() {
   const createFeedbackMutation = useMutation({
     mutationFn: (data: FeedbackCreate) => api('/api/feedback', { method: 'POST', body: JSON.stringify(data) }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['feedback', id] });
+      queryClient.invalidateQueries({ queryKey: ['feedback', customerId] });
       showNotification('success', 'Thank you for your feedback!');
       setFeedbackDialogOpen(false);
       reset();
@@ -67,8 +65,8 @@ export function CustomerProfile() {
     onError: () => showNotification('error', 'Failed to submit feedback.'),
   });
   const onFeedbackSubmit = (data: FeedbackFormData) => {
-    if (!id) return;
-    createFeedbackMutation.mutate({ customer_id: id, ...data });
+    if (!customerId) return;
+    createFeedbackMutation.mutate({ customer_id: customerId, ...data });
   };
   const getInitials = (name: string) => {
     const names = name.split(' ');
@@ -76,19 +74,19 @@ export function CustomerProfile() {
   };
   if (isLoadingCustomer) {
     return (
-      <AppLayout container>
+      <CustomerLayout container>
         <div className="grid md:grid-cols-3 gap-8">
           <div className="md:col-span-1 space-y-4"><Skeleton className="h-48 w-full" /><Skeleton className="h-32 w-full" /></div>
           <div className="md:col-span-2"><Skeleton className="h-96 w-full" /></div>
         </div>
-      </AppLayout>
+      </CustomerLayout>
     );
   }
   if (!customer) {
-    return <AppLayout container><div className="text-center py-20">Customer not found.</div></AppLayout>;
+    return <CustomerLayout container><div className="text-center py-20">Customer not found.</div></CustomerLayout>;
   }
   return (
-    <AppLayout container>
+    <CustomerLayout container>
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-1 space-y-6">
           <Card>
@@ -101,28 +99,6 @@ export function CustomerProfile() {
               <div className="flex items-center gap-2"><Phone className="h-4 w-4" /><span>{decrypt(customer.phone_number)}</span></div>
               <div className="flex items-center gap-2"><Mail className="h-4 w-4" /><span>{decrypt(customer.email)}</span></div>
               <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /><span>Joined {format(new Date(customer.registration_date), 'd MMM yyyy')}</span></div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle>Loyalty Points</CardTitle></CardHeader>
-            <CardContent className="text-center">
-              <div className="text-5xl font-bold text-primary">{customer.loyalty_points}</div>
-              <p className="text-muted-foreground">points</p>
-              {isAdmin && (
-                <Dialog>
-                  <DialogTrigger asChild><Button className="mt-4 w-full"><PlusCircle className="mr-2 h-4 w-4" /> Adjust Points</Button></DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader><DialogTitle>Adjust Loyalty Points</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="points" className="text-right">Points</Label>
-                        <Input id="points" type="number" defaultValue={customer.loyalty_points} className="col-span-3" />
-                      </div>
-                      <Button onClick={() => showNotification('success', 'Points updated successfully!')}>Save Changes</Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -213,6 +189,6 @@ export function CustomerProfile() {
           </Tabs>
         </div>
       </div>
-    </AppLayout>
+    </CustomerLayout>
   );
 }

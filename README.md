@@ -1,6 +1,6 @@
 # Salt N Bite — Customer Management System (CRM)
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Maftuuh1922/salt-n-bite-customer-management-system-crm)
 
 ## Overview
 
@@ -176,7 +176,7 @@ For production:
 - Enable analytics engine for observability.
 - Migrate to external DB (MySQL/PostgreSQL) if scaling beyond Durable Objects.
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Maftuuh1922/salt-n-bite-customer-management-system-crm)
 
 ## Contributing
 

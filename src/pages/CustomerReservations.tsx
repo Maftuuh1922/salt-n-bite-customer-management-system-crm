@@ -13,7 +13,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Reservation, ReservationCreate, EncryptedCustomer } from '@shared/types';
 import { format, formatISO } from 'date-fns';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { showNotification } from '@/components/NotificationToast';
@@ -25,7 +25,12 @@ const reservationSchema = z.object({
   number_of_guests: z.coerce.number().min(1, "Must be a number greater than 0"),
   notes: z.string().optional(),
 });
-type ReservationFormData = z.infer<typeof reservationSchema>;
+// Explicitly define the form type to correct the inference from z.coerce.number()
+type ReservationFormData = {
+    reservation_time: string;
+    number_of_guests: number;
+    notes?: string;
+};
 export function CustomerReservations() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -37,7 +42,7 @@ export function CustomerReservations() {
     enabled: !!customerId,
   });
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ReservationFormData>({
-    resolver: zodResolver(reservationSchema),
+    resolver: zodResolver(reservationSchema as z.ZodSchema<ReservationFormData>),
     defaultValues: {
       number_of_guests: 1,
     }
@@ -68,7 +73,7 @@ export function CustomerReservations() {
     },
     onError: (err) => showNotification('error', 'Failed to create reservation', err instanceof Error ? err.message : 'Unknown error'),
   });
-  const onSubmit = (data: ReservationFormData) => {
+  const onSubmit: SubmitHandler<ReservationFormData> = (data) => {
     if (!customer?.phone_number) {
       showNotification('error', 'Could not find your phone number.');
       return;
@@ -83,7 +88,7 @@ export function CustomerReservations() {
   return (
     <CustomerLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-8 md:py-10 lg:py-12 space-y-8">
+        <div className="py-8 md:py-10 lg:py-12 space-y-8 batik-bg">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold">My Reservations</h1>
             <Button onClick={() => setIsSheetOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> New Reservation</Button>

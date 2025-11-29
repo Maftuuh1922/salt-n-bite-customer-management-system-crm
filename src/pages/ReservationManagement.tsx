@@ -13,7 +13,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Reservation, ReservationCreate } from '@shared/types';
 import { format, formatISO } from 'date-fns';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { showNotification } from '@/components/NotificationToast';
@@ -25,13 +25,19 @@ const reservationSchema = z.object({
   number_of_guests: z.coerce.number().min(1, "Must be a number greater than 0"),
   notes: z.string().optional(),
 });
-type ReservationFormData = z.infer<typeof reservationSchema>;
+// Explicitly define the form type to correct the inference from z.coerce.number()
+type ReservationFormData = {
+    customer_phone: string;
+    reservation_time: string;
+    number_of_guests: number;
+    notes?: string;
+};
 export function ReservationManagement() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const queryClient = useQueryClient();
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ReservationFormData>({
-    resolver: zodResolver(reservationSchema),
+    resolver: zodResolver(reservationSchema as z.ZodSchema<ReservationFormData>),
     defaultValues: {
       number_of_guests: 1,
     }
@@ -63,7 +69,7 @@ export function ReservationManagement() {
     },
     onError: (err) => showNotification('error', 'Failed to create reservation', err instanceof Error ? err.message : 'Unknown error'),
   });
-  const onSubmit = (data: ReservationFormData) => {
+  const onSubmit: SubmitHandler<ReservationFormData> = (data) => {
     const reservationData: ReservationCreate = {
       ...data,
       reservation_date: formatISO(date || new Date(), { representation: 'date' }),

@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { api } from '@/lib/api-client';
 import type { DashboardStats } from '@shared/types';
 import { setAuthToken } from '@/lib/auth';
+import { useTheme } from '@/hooks/use-theme';
 const FeatureCard = ({ icon, title, description }: { icon: React.ElementType, title: string, description: string }) => {
   const Icon = icon;
   return (
@@ -36,6 +37,7 @@ export function HomePage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { isDark } = useTheme();
   useEffect(() => {
     // Prefill demo auth token for Phase 1
     setAuthToken('demo-admin-jwt');
@@ -54,10 +56,17 @@ export function HomePage() {
     todaysVisits: loading || !stats ? 0 : stats.todaysVisits,
     activePromos: loading || !stats ? 0 : stats.activePromos,
   };
+  const heroDescription = isDark
+    ? "Sistem manajemen pelanggan restoran cepat saji terintegrasi dengan POS, Reservasi, dan Akuntansi"
+    : "An integrated solution for POS, reservations, and loyalty to delight your customers and grow your business.";
   return (
     <div className="bg-background text-foreground batik-bg">
       <ThemeToggle className="fixed top-4 right-4" />
-      <Hero stats={heroStats} />
+      <Hero 
+        stats={heroStats} 
+        title="Salt N Bite Customer Management" 
+        description={heroDescription} 
+      />
       <main>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-16 md:py-24">

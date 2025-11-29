@@ -16,7 +16,12 @@ const StatPill = ({ icon, label, value }: { icon: React.ElementType; label: stri
     </div>
   );
 };
-export function Hero({ stats }: { stats: { totalCustomers: number; todaysVisits: number; activePromos: number } }) {
+interface HeroProps {
+  stats: { totalCustomers: number; todaysVisits: number; activePromos: number };
+  title: string;
+  description: string;
+}
+export function Hero({ stats, title, description }: HeroProps) {
   return (
     <div className="relative w-full overflow-hidden bg-gradient-to-br from-[#F38020] to-[#b3510a] text-white">
       <div
@@ -34,10 +39,10 @@ export function Hero({ stats }: { stats: { totalCustomers: number; todaysVisits:
             transition={{ duration: 0.6 }}
           >
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight text-white">
-              Salt N Bite Customer Management
+              {title}
             </h1>
-            <p className="mt-4 max-w-2xl mx-auto text-lg text-white/80">
-              An integrated solution for POS, reservations, and loyalty to delight your customers and grow your business.
+            <p className="mt-4 max-w-3xl mx-auto text-lg text-white/80">
+              {description}
             </p>
           </motion.div>
           <motion.div

@@ -23,8 +23,8 @@ const reservationSchema = z.object({
   customer_phone: z.string().min(10, "Phone number is required"),
   reservation_time: z.string().min(1, "Time is required"),
   number_of_guests: z.preprocess(
-    (val) => Number(val),
-    z.number().min(1, "Must be a number greater than 0")
+    (val) => (val === "" ? undefined : Number(val)),
+    z.number({ invalid_type_error: "Must be a number" }).min(1, "Must be at least 1 guest")
   ),
   notes: z.string().optional(),
 });
@@ -70,6 +70,7 @@ export function ReservationManagement() {
     const reservationData: ReservationCreate = {
       ...data,
       reservation_date: formatISO(date || new Date(), { representation: 'date' }),
+      number_of_guests: data.number_of_guests,
     };
     createMutation.mutate(reservationData);
   };

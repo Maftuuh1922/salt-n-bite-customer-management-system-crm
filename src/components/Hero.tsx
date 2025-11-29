@@ -16,12 +16,7 @@ const StatPill = ({ icon, label, value }: { icon: React.ElementType; label: stri
     </div>
   );
 };
-interface HeroProps {
-  stats: { totalCustomers: number; todaysVisits: number; activePromos: number };
-  title: string;
-  description: string;
-}
-export function Hero({ stats, title, description }: HeroProps) {
+export function Hero({ stats }: { stats: { totalCustomers: number; todaysVisits: number; activePromos: number } }) {
   return (
     <div className="relative w-full overflow-hidden bg-gradient-to-br from-[#F38020] to-[#b3510a] text-white">
       <div
@@ -39,11 +34,26 @@ export function Hero({ stats, title, description }: HeroProps) {
             transition={{ duration: 0.6 }}
           >
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight text-white">
-              {title}
+              Salt N Bite Customer Management
             </h1>
-            <p className="mt-4 max-w-3xl mx-auto text-lg text-white/80">
-              {description}
+            <p className="mt-4 max-w-2xl mx-auto text-lg text-white/80">
+              An integrated solution for POS, reservations, and loyalty to delight your customers and grow your business.
             </p>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mt-8 flex justify-center gap-4"
+          >
+            <Button size="lg" className="bg-white text-[#F38020] hover:bg-white/90 font-semibold" asChild>
+              <Link to="/dashboard">
+                Open Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" className="text-white border-white/50 hover:bg-white/10 hover:text-white">
+              Learn More
+            </Button>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}

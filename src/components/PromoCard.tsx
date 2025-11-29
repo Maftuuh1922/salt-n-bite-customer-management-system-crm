@@ -5,14 +5,14 @@ import { Calendar, Tag, Zap } from "lucide-react";
 import { Promo } from "@shared/types";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-export function PromoCard({ promo, showRedeemButton = false, onRedeem }: { promo: Promo, showRedeemButton?: boolean, onRedeem?: (promoId: string) => void }) {
+export function PromoCard({ promo }: { promo: Promo }) {
   const promoTypeColors = {
     event: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
     birthday: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200",
     membership: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
   };
   return (
-    <Card className="flex flex-col h-full">
+    <Card className="flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle>{promo.promo_name}</CardTitle>
@@ -32,13 +32,10 @@ export function PromoCard({ promo, showRedeemButton = false, onRedeem }: { promo
           </span>
         </div>
       </CardContent>
-      {showRedeemButton && (
-        <CardFooter>
-          <Button size="sm" className="w-full" onClick={() => onRedeem?.(promo.id)}>
-            Redeem for 50 Points
-          </Button>
-        </CardFooter>
-      )}
+      <CardFooter className="flex justify-between">
+        <Button variant="ghost" size="sm">Details</Button>
+        <Button size="sm">Use Promo</Button>
+      </CardFooter>
     </Card>
   );
 }

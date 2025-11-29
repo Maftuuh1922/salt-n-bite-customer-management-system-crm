@@ -1,148 +1,119 @@
-// Home page of the app, Currently a demo page for demonstration.
-// Please rewrite this file to implement your own logic. Do not replace or delete it, simply rewrite this HomePage.tsx file.
-import { useEffect } from 'react'
-import { Sparkles } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { ThemeToggle } from '@/components/ThemeToggle'
-import { Toaster, toast } from '@/components/ui/sonner'
-import { create } from 'zustand'
-import { useShallow } from 'zustand/react/shallow'
-import { AppLayout } from '@/components/layout/AppLayout'
-
-// Timer store: independent slice with a clear, minimal API, for demonstration
-type TimerState = {
-  isRunning: boolean;
-  elapsedMs: number;
-  start: () => void;
-  pause: () => void;
-  reset: () => void;
-  tick: (deltaMs: number) => void;
-}
-
-const useTimerStore = create<TimerState>((set) => ({
-  isRunning: false,
-  elapsedMs: 0,
-  start: () => set({ isRunning: true }),
-  pause: () => set({ isRunning: false }),
-  reset: () => set({ elapsedMs: 0, isRunning: false }),
-  tick: (deltaMs) => set((s) => ({ elapsedMs: s.elapsedMs + deltaMs })),
-}))
-
-// Counter store: separate slice to showcase multiple stores without coupling
-type CounterState = {
-  count: number;
-  inc: () => void;
-  reset: () => void;
-}
-
-const useCounterStore = create<CounterState>((set) => ({
-  count: 0,
-  inc: () => set((s) => ({ count: s.count + 1 })),
-  reset: () => set({ count: 0 }),
-}))
-
-function formatDuration(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000))
-  const m = Math.floor(total / 60)
-  const s = total % 60
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
-
-export function HomePage() {
-  // Select only what is needed to avoid unnecessary re-renders
-  const { isRunning, elapsedMs } = useTimerStore(
-    useShallow((s) => ({ isRunning: s.isRunning, elapsedMs: s.elapsedMs })),
-  )
-  const start = useTimerStore((s) => s.start)
-  const pause = useTimerStore((s) => s.pause)
-  const resetTimer = useTimerStore((s) => s.reset)
-  const count = useCounterStore((s) => s.count)
-  const inc = useCounterStore((s) => s.inc)
-  const resetCount = useCounterStore((s) => s.reset)
-
-  // Drive the timer only while running; avoid update-depth issues with a scoped RAF
-  useEffect(() => {
-    if (!isRunning) return
-    let raf = 0
-    let last = performance.now()
-    const loop = () => {
-      const now = performance.now()
-      const delta = now - last
-      last = now
-      // Read store API directly to keep effect deps minimal and stable
-      useTimerStore.getState().tick(delta)
-      raf = requestAnimationFrame(loop)
-    }
-    raf = requestAnimationFrame(loop)
-    return () => cancelAnimationFrame(raf)
-  }, [isRunning])
-
-  const onPleaseWait = () => {
-    inc()
-    if (!isRunning) {
-      start()
-      toast.success('Building your app…', {
-        description: 'Hang tight, we\'re setting everything up.',
-      })
-    } else {
-      pause()
-      toast.info('Taking a short pause', {
-        description: 'We\'ll continue shortly.',
-      })
-    }
-  }
-
-  const formatted = formatDuration(elapsedMs)
-
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Toaster } from '@/components/ui/sonner';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { Hero } from '@/components/Hero';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, BarChart, Gift, Users } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { api } from '@/lib/api-client';
+import type { DashboardStats } from '@shared/types';
+const FeatureCard = ({ icon, title, description, link }: { icon: React.ElementType, title: string, description: string, link: string }) => {
+  const Icon = icon;
   return (
-    <AppLayout>
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden relative">
-        <ThemeToggle />
-        <div className="absolute inset-0 bg-gradient-rainbow opacity-10 dark:opacity-20 pointer-events-none" />
-        <div className="text-center space-y-8 relative z-10 animate-fade-in">
-          <div className="flex justify-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-primary floating">
-              <Sparkles className="w-8 h-8 text-white rotating" />
-            </div>
+    <motion.div
+      whileHover={{ y: -5, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" }}
+      className="h-full"
+    >
+      <Card className="h-full flex flex-col">
+        <CardHeader className="flex flex-row items-center gap-4">
+          <div className="p-3 bg-primary/10 rounded-lg">
+            <Icon className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="text-5xl md:text-7xl font-display font-bold text-balance leading-tight">
-            Creating your <span className="text-gradient">app</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto text-pretty">
-            Your application would be ready soon.
-          </p>
-          <div className="flex justify-center gap-4">
-            <Button 
-              size="lg"
-              onClick={onPleaseWait}
-              className="btn-gradient px-8 py-4 text-lg font-semibold hover:-translate-y-0.5 transition-all duration-200"
-              aria-live="polite"
-            >
-              Please Wait
-            </Button>
-          </div>
-          <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-            <div>
-              Time elapsed: <span className="font-medium tabular-nums text-foreground">{formatted}</span>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex-grow">
+          <p className="text-muted-foreground">{description}</p>
+        </CardContent>
+        <div className="p-6 pt-0">
+          <Button variant="outline" asChild>
+            <Link to={link}>
+              Go to {title} <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </Card>
+    </motion.div>
+  );
+};
+export function HomePage() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    // Prefill demo auth token for Phase 1
+    localStorage.setItem('authToken', 'demo-mode-token');
+    api<DashboardStats>('/api/dashboard/stats')
+      .then(data => {
+        setStats(data);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+  const heroStats = {
+    totalCustomers: loading || !stats ? 0 : stats.totalCustomers,
+    todaysVisits: loading || !stats ? 0 : stats.todaysVisits,
+    activePromos: loading || !stats ? 0 : stats.activePromos,
+  };
+  return (
+    <div className="bg-background text-foreground">
+      <ThemeToggle className="fixed top-4 right-4" />
+      <Hero stats={heroStats} />
+      <main>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="py-16 md:py-24 lg:py-32">
+            <div className="text-center">
+              <h2 className="text-3xl md:text-4xl font-bold font-display">Core Features</h2>
+              <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+                Everything you need to build stronger customer relationships and drive growth.
+              </p>
             </div>
-            <div>
-              Coins: <span className="font-medium tabular-nums text-foreground">{count}</span>
+            <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {loading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <Card key={i}>
+                    <CardHeader>
+                      <Skeleton className="h-8 w-32" />
+                    </CardHeader>
+                    <CardContent>
+                      <Skeleton className="h-4 w-full mb-2" />
+                      <Skeleton className="h-4 w-4/5" />
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <>
+                  <FeatureCard
+                    icon={BarChart}
+                    title="Dashboard"
+                    description="Get a real-time overview of your customer activity, sales, and engagement metrics."
+                    link="/dashboard"
+                  />
+                  <FeatureCard
+                    icon={Users}
+                    title="Customer Profiles"
+                    description="Access detailed customer histories, including transactions, visits, and loyalty status."
+                    link="/customers/cust_1"
+                  />
+                  <FeatureCard
+                    icon={Gift}
+                    title="Promo Management"
+                    description="Create, manage, and track the performance of your promotional events and loyalty programs."
+                    link="/promos"
+                  />
+                </>
+              )}
             </div>
-          </div>
-          <div className="flex justify-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => { resetTimer(); resetCount(); toast('Reset complete') }}>
-              Reset
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => { inc(); toast('Coin added') }}>
-              Add Coin
-            </Button>
           </div>
         </div>
-        <footer className="absolute bottom-8 text-center text-muted-foreground/80">
-          <p>Powered by Cloudflare</p>
-        </footer>
-        <Toaster richColors closeButton />
-      </div>
-    </AppLayout>
-  )
+      </main>
+      <footer className="border-t">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-muted-foreground">
+          <p>&copy; {new Date().getFullYear()} Salt N Bite. Built with ❤️ at Cloudflare.</p>
+        </div>
+      </footer>
+      <Toaster richColors closeButton />
+    </div>
+  );
 }

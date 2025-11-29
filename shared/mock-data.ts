@@ -1,15 +1,160 @@
-import type { User, Chat, ChatMessage } from './types';
-
-export const MOCK_USERS: User[] = [
-  { id: 'u1', name: 'User A' },
-  { id: 'u2', name: 'User B' }
+import { Customer, Transaction, Promo, Reservation, Feedback, LoyaltyEvent } from './types';
+import { subDays, formatISO } from 'date-fns';
+export const MOCK_CUSTOMERS: Customer[] = [
+  {
+    id: 'cust_1',
+    phone_number: '+6281234567890',
+    name: 'Budi Santoso',
+    email: 'budi.s@example.com',
+    membership_level: 'Gold',
+    total_visits: 25,
+    total_spent: 5250000,
+    loyalty_points: 1250,
+    registration_date: formatISO(subDays(new Date(), 180)),
+    last_visit: formatISO(subDays(new Date(), 5)),
+    avatarUrl: `https://api.dicebear.com/8.x/adventurer/svg?seed=Budi`,
+  },
+  {
+    id: 'cust_2',
+    phone_number: '+6281298765432',
+    name: 'Citra Lestari',
+    email: 'citra.l@example.com',
+    membership_level: 'Silver',
+    total_visits: 12,
+    total_spent: 2100000,
+    loyalty_points: 420,
+    registration_date: formatISO(subDays(new Date(), 90)),
+    last_visit: formatISO(subDays(new Date(), 12)),
+    avatarUrl: `https://api.dicebear.com/8.x/adventurer/svg?seed=Citra`,
+  },
+  {
+    id: 'cust_3',
+    phone_number: '+6285611112222',
+    name: 'Agus Wijaya',
+    membership_level: 'Bronze',
+    total_visits: 5,
+    total_spent: 850000,
+    loyalty_points: 85,
+    registration_date: formatISO(subDays(new Date(), 30)),
+    last_visit: formatISO(subDays(new Date(), 2)),
+    avatarUrl: `https://api.dicebear.com/8.x/adventurer/svg?seed=Agus`,
+  },
+  {
+    id: 'cust_4',
+    phone_number: '+6287733334444',
+    name: 'Dewi Anggraini',
+    email: 'dewi.a@example.com',
+    membership_level: 'Platinum',
+    total_visits: 52,
+    total_spent: 15800000,
+    loyalty_points: 5800,
+    registration_date: formatISO(subDays(new Date(), 365)),
+    last_visit: formatISO(subDays(new Date(), 1)),
+    avatarUrl: `https://api.dicebear.com/8.x/adventurer/svg?seed=Dewi`,
+  },
+  {
+    id: 'cust_5',
+    phone_number: '+6289955556666',
+    name: 'Eko Prasetyo',
+    membership_level: 'Gold',
+    total_visits: 31,
+    total_spent: 7200000,
+    loyalty_points: 2100,
+    registration_date: formatISO(subDays(new Date(), 250)),
+    last_visit: formatISO(subDays(new Date(), 7)),
+    avatarUrl: `https://api.dicebear.com/8.x/adventurer/svg?seed=Eko`,
+  },
 ];
-
-export const MOCK_CHATS: Chat[] = [
-  { id: 'c1', title: 'General' },
+export const MOCK_TRANSACTIONS: Transaction[] = [
+  {
+    id: 'txn_1',
+    customer_id: 'cust_4',
+    transaction_date: formatISO(subDays(new Date(), 1)),
+    total_amount: 350000,
+    payment_method: 'Credit Card',
+    loyalty_points_earned: 70,
+    pos_transaction_id: 'POS-20240520-001',
+    items: [{ name: 'Steak', quantity: 2, price: 150000 }, { name: 'Juice', quantity: 2, price: 25000 }],
+  },
+  {
+    id: 'txn_2',
+    customer_id: 'cust_3',
+    transaction_date: formatISO(subDays(new Date(), 2)),
+    total_amount: 180000,
+    payment_method: 'Digital Wallet',
+    loyalty_points_earned: 18,
+    pos_transaction_id: 'POS-20240519-005',
+    items: [{ name: 'Burger', quantity: 2, price: 75000 }, { name: 'Fries', quantity: 1, price: 30000 }],
+  },
+  {
+    id: 'txn_3',
+    customer_id: 'cust_1',
+    transaction_date: formatISO(subDays(new Date(), 5)),
+    total_amount: 250000,
+    payment_method: 'Cash',
+    loyalty_points_earned: 50,
+    pos_transaction_id: 'POS-20240516-012',
+    items: [{ name: 'Pasta', quantity: 2, price: 90000 }, { name: 'Coffee', quantity: 2, price: 35000 }],
+  },
+  {
+    id: 'txn_4',
+    customer_id: 'cust_5',
+    transaction_date: formatISO(subDays(new Date(), 7)),
+    total_amount: 410000,
+    payment_method: 'Credit Card',
+    loyalty_points_earned: 82,
+    pos_transaction_id: 'POS-20240514-002',
+    items: [{ name: 'Pizza', quantity: 2, price: 120000 }, { name: 'Salad', quantity: 1, price: 70000 }, { name: 'Drink', quantity: 2, price: 50000 }],
+  },
+  {
+    id: 'txn_5',
+    customer_id: 'cust_2',
+    transaction_date: formatISO(subDays(new Date(), 12)),
+    total_amount: 220000,
+    payment_method: 'Digital Wallet',
+    loyalty_points_earned: 22,
+    pos_transaction_id: 'POS-20240509-008',
+    items: [{ name: 'Chicken Wings', quantity: 2, price: 80000 }, { name: 'Iced Tea', quantity: 2, price: 30000 }],
+  },
 ];
-
-export const MOCK_CHAT_MESSAGES: ChatMessage[] = [
-  { id: 'm1', chatId: 'c1', userId: 'u1', text: 'Hello', ts: Date.now() },
+export const MOCK_PROMOS: Promo[] = [
+  {
+    id: 'promo_1',
+    promo_name: 'Weekend Special',
+    promo_type: 'event',
+    description: 'Get 20% off on all steaks every Saturday and Sunday.',
+    start_date: formatISO(subDays(new Date(), 10)),
+    end_date: formatISO(new Date(new Date().setDate(new Date().getDate() + 20))),
+    is_active: true,
+  },
+  {
+    id: 'promo_2',
+    promo_name: 'Ramadan Kareem',
+    promo_type: 'event',
+    description: 'Special Iftar package for two people.',
+    start_date: formatISO(subDays(new Date(), 40)),
+    end_date: formatISO(subDays(new Date(), 10)),
+    is_active: false,
+  },
+  {
+    id: 'promo_3',
+    promo_name: 'Birthday Treat',
+    promo_type: 'birthday',
+    description: 'Free dessert on your birthday week!',
+    start_date: formatISO(new Date(new Date().getFullYear(), 0, 1)),
+    end_date: formatISO(new Date(new Date().getFullYear(), 11, 31)),
+    is_active: true,
+  },
 ];
-  
+export const MOCK_RESERVATIONS: Reservation[] = [];
+export const MOCK_FEEDBACK: Feedback[] = [];
+export const MOCK_LOYALTY_EVENTS: LoyaltyEvent[] = [
+  {
+    id: 'le_1',
+    event_name: 'Double Points Weekend',
+    points_multiplier: 2,
+    start_date: formatISO(subDays(new Date(), 2)),
+    end_date: formatISO(new Date(new Date().setDate(new Date().getDate() + 2))),
+    is_active: true,
+  },
+];

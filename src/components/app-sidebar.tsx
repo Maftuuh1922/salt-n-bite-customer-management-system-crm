@@ -10,6 +10,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/lib/auth";
 const SaltNSpicesLogo = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
     <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="currentColor"/>
@@ -18,6 +19,7 @@ const SaltNSpicesLogo = () => (
 );
 export function AppSidebar(): JSX.Element {
   const location = useLocation();
+  const { role } = useAuth();
   const isActive = (path: string) => location.pathname.startsWith(path);
   return (
     <Sidebar>
@@ -38,22 +40,26 @@ export function AppSidebar(): JSX.Element {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isActive('/customers')}>
-              <Link to="/customers/cust_1"><Users /> <span>Customers</span></Link>
+              <Link to="/customers"><Users /> <span>Customers</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isActive('/promos')}>
-              <Link to="/promos"><Tag /> <span>Promotions</span></Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {(role === 'admin' || role === 'manager') && (
+            <>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive('/promos')}>
+                  <Link to="/promos"><Tag /> <span>Promotions</span></Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive('/reports')}>
+                  <Link to="/reports"><BarChart2 /> <span>Reporting</span></Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </>
+          )}
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isActive('/reservations')}>
               <Link to="/reservations"><Calendar /> <span>Reservations</span></Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isActive('/reports')}>
-              <Link to="/reports"><BarChart2 /> <span>Reporting</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

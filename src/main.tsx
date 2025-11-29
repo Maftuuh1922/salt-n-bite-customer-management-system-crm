@@ -13,6 +13,7 @@ import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
 import { HomePage } from '@/pages/HomePage'
 import { Dashboard } from '@/pages/Dashboard';
+import { Customers } from '@/pages/Customers';
 import { CustomerProfile } from '@/pages/CustomerProfile';
 import { PromoManagement } from '@/pages/PromoManagement';
 import { ReservationManagement } from '@/pages/ReservationManagement';
@@ -35,6 +36,11 @@ const router = createBrowserRouter([
   {
     path: "/dashboard",
     element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/customers",
+    element: <ProtectedRoute><Customers /></ProtectedRoute>,
     errorElement: <RouteErrorBoundary />,
   },
   {

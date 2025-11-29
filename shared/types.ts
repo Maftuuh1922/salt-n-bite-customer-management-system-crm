@@ -41,6 +41,9 @@ export interface Promo {
   start_date: string;
   end_date: string;
   is_active: boolean;
+  discount_percentage?: number;
+  discount_amount?: number;
+  minimum_purchase?: number;
 }
 export interface Reservation {
   id: string;
@@ -48,6 +51,7 @@ export interface Reservation {
   reservation_date: string;
   number_of_guests: number;
   status: 'confirmed' | 'completed' | 'cancelled';
+  notes?: string;
 }
 export interface Feedback {
   id: string;
@@ -83,6 +87,14 @@ export type ReportType = 'customer-activity' | 'promo-effectiveness' | 'loyalty-
 export interface Paginated<T> {
   items: T[];
   next?: string | null;
+}
+export interface PaginatedReservation extends Paginated<Reservation> {}
+export interface ReservationCreate {
+  customer_phone: string;
+  reservation_date: string;
+  reservation_time: string;
+  number_of_guests: number;
+  notes?: string;
 }
 export interface LoyaltyCalcRequest {
   total_amount: number;

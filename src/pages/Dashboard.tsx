@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BarChart, Users, Tag, DollarSign, ArrowUpRight } from 'lucide-react';
+import { BarChart as BarChartIcon, Users, Tag, DollarSign, ArrowUpRight } from 'lucide-react';
 import { Bar, BarChart as RechartsBarChart, Line, LineChart as RechartsLineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
 import { api } from '@/lib/api-client';
 import type { DashboardStats, Customer, Transaction, CustomerGroup } from '@shared/types';
@@ -84,7 +84,7 @@ export function Dashboard() {
             <StatCard title="Total Customers" value={stats.totalCustomers} icon={Users} change="+180.1% from last month" />
           </motion.div>
           <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
-            <StatCard title="Today's Visits" value={stats.todaysVisits} icon={BarChart} change="+19% from last month" />
+            <StatCard title="Today's Visits" value={stats.todaysVisits} icon={BarChartIcon} change="+19% from last month" />
           </motion.div>
           <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
             <StatCard title="Active Promos" value={stats.activePromos} icon={Tag} />

@@ -7,10 +7,24 @@ const permissions = {
 };
 type Role = keyof typeof permissions;
 export const useAuth = () => {
-  const [token, setToken] = useState<string | null>(null);
-  const [role, setRole] = useState<Role | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const getInitialAuth = () => {
+    if (typeof window === 'undefined') {
+      return { token: null, role: null, isAuthenticated: false } as const;
+    }
+    const storedToken = localStorage.getItem('authToken');
+    if (storedToken) {
+      // In a real app, you'd decode the JWT here to get the role
+      const mockRole: Role = storedToken === 'demo-admin-jwt' ? 'admin' : 'staff';
+      return { token: storedToken, role: mockRole, isAuthenticated: true } as const;
+    }
+    return { token: null, role: null, isAuthenticated: false } as const;
+  };
+  const initialAuth = getInitialAuth();
+  const [token, setToken] = useState<string | null>(initialAuth.token);
+  const [role, setRole] = useState<Role | null>(initialAuth.role);
+  const [isAuthenticated, setIsAuthenticated] = useState(initialAuth.isAuthenticated);
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const storedToken = localStorage.getItem('authToken');
     if (storedToken) {
       // In a real app, you'd decode the JWT here to get the role
@@ -35,6 +49,7 @@ export const useAuth = () => {
   return { token, role, isAuthenticated, isAdmin: role === 'admin', hasAccess };
 };
 export const setAuthToken = (token: string | null) => {
+  if (typeof window === 'undefined') return;
   if (token) {
     localStorage.setItem('authToken', token);
   } else {
